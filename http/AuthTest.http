@@ -1,0 +1,18 @@
+### signup
+POST localhost:8080/auth/signup
+Content-Type: application/json
+
+{
+  "fullName": "John Doe",
+  "email": "jone@gamil.com",
+  "password": "123456"
+}
+
+### login
+POST localhost:8080/auth/signin
+Content-Type: application/json
+
+{
+  "email": "jon33e@gamil.com",
+  "password": "123456"
+}

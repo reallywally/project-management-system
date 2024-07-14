@@ -9,3 +9,6 @@
 - 스프링 시큐리티 활용한 구조로 변경
 - 연관 관계 최대한 ManyToOne만 사용 
 - querydsl 사용
+- 레이어 이동간 DTO 사용
+- runtime exception 추가
+- 빌더, 객체 생성 맵퍼 추가

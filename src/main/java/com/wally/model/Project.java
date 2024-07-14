@@ -23,7 +23,7 @@ public class Project {
     private String category;
 
 
-    private List<String> tag = new ArrayList<>();
+    private List<String> tags = new ArrayList<>();
 
     @OneToOne(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore

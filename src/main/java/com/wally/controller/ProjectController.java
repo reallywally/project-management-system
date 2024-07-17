@@ -1,9 +1,12 @@
 package com.wally.controller;
 
 import com.wally.model.Chat;
+import com.wally.model.Invitation;
 import com.wally.model.Project;
 import com.wally.model.User;
+import com.wally.request.InviteRequest;
 import com.wally.response.MessageResponse;
+import com.wally.service.InvitationService;
 import com.wally.service.ProjectService;
 import com.wally.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +24,7 @@ public class ProjectController {
 
     private final ProjectService projectService;
     private final UserService userService;
+    private final InvitationService invitationService;
 
     @GetMapping("/projects")
     public ResponseEntity<List<Project>> getProjects(
@@ -104,6 +108,28 @@ public class ProjectController {
         return new ResponseEntity<>(chat, HttpStatus.OK);
     }
 
+    @PostMapping("/invite")
+    public ResponseEntity<MessageResponse> inviteProject(
+            @RequestBody InviteRequest inviteRequest,
+            @RequestHeader("Authorization") String jwt) throws Exception {
 
+        User user = userService.findUserProfileByJwt(jwt);
+        invitationService.sendInvitation(inviteRequest.getEmail(), inviteRequest.getProjectId());
 
+        MessageResponse messageResponse = new MessageResponse("Project deleted successfully");
+
+        return new ResponseEntity<>(messageResponse, HttpStatus.OK);
+    }
+
+    @GetMapping("/accept-invitation")
+    public ResponseEntity<Invitation> acceptInviteProject(
+            @RequestParam String token,
+            @RequestHeader("Authorization") String jwt) throws Exception {
+
+        User user = userService.findUserProfileByJwt(jwt);
+        Invitation invitation = invitationService.acceptInvitation(token, user.getId());
+        projectService.addUserToProject(invitation.getProjectId(), user.getId());
+
+        return new ResponseEntity<>(invitation, HttpStatus.ACCEPTED);
+    }
 }

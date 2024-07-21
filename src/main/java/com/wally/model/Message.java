@@ -1,5 +1,6 @@
 package com.wally.model;
 
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,7 +16,6 @@ public class Message {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-
     private String content;
 
     private LocalDateTime createdAt;

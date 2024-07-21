@@ -13,3 +13,5 @@
 - 레이어 이동간 DTO, Request DTO, Response DTO 사용
 - runtime exception 추가
 - 빌더, 객체 생성 맵퍼 추가
+- 컨트롤러에서 예외처리 하는거 개선
+  - UserController가 NotFoundException을 처리하면 나중에 다른 서비스에서 호출할때는 user 체크가 누락되니까

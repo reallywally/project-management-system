@@ -5,14 +5,17 @@ import com.wally.model.Project;
 import com.wally.model.User;
 import com.wally.repository.ProjectRepository;
 import com.wally.request.ProjectCreate;
+import com.wally.request.ProjectUpdate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class ProjectServiceImpl implements ProjectService {
 
@@ -76,14 +79,11 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public Project updateProject(Project updatedProject, Long id) throws Exception {
+    public void updateProject(ProjectUpdate projectUpdate, Long id) throws Exception {
+
         Project project = getProjectById(id);
 
-        project.setName(updatedProject.getName());
-        project.setDescription(updatedProject.getDescription());
-        project.setTags(updatedProject.getTags());
-
-        return projectRepository.save(project);
+        project.update(projectUpdate);
     }
 
     @Override

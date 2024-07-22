@@ -1,6 +1,7 @@
 package com.wally.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.wally.request.ProjectUpdate;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -45,5 +46,12 @@ public class Project {
         this.category = category;
         this.tags = tags;
         this.ownerId = ownerId;
+    }
+
+    public void update(ProjectUpdate projectUpdate){
+        name = projectUpdate.getName();
+        description = projectUpdate.getDescription();
+        category = projectUpdate.getCategory();
+        tags = projectUpdate.getTags();
     }
 }

@@ -4,6 +4,7 @@ import com.wally.model.Chat;
 import com.wally.model.Project;
 import com.wally.model.User;
 import com.wally.request.ProjectCreate;
+import com.wally.request.ProjectUpdate;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ public interface ProjectService {
 
     void deleteProject(Long projectId, Long userId) throws Exception;
 
-    Project updateProject(Project updatedProject, Long id) throws Exception;
+    void updateProject(ProjectUpdate projectUpdate, Long id) throws Exception;
 
     void addUserToProject(Long projectId, Long userId) throws Exception;
 

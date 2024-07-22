@@ -17,6 +17,9 @@
 </template>
 
 <script>
+import axios from 'axios';
+import { saveToken, getToken } from '../auth';
+
 export default {
   data() {
     return {
@@ -26,10 +29,15 @@ export default {
     };
   },
   methods: {
-    handleLogin() {
-      if (this.username === 'admin' && this.password === 'admin') {
+    async handleLogin() {
+      try {
+        const response = await axios.post('localhost:8000/api/login', {
+          username: this.username,
+          password: this.password
+        });
+        saveToken(response.data.token);
         this.$router.push('/dashboard');
-      } else {
+      } catch (err) {
         this.error = 'Login failed. Please check your credentials.';
       }
     }

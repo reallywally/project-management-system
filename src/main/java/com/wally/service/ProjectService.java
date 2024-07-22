@@ -3,12 +3,13 @@ package com.wally.service;
 import com.wally.model.Chat;
 import com.wally.model.Project;
 import com.wally.model.User;
+import com.wally.request.ProjectCreate;
 
 import java.util.List;
 
 public interface ProjectService {
 
-    Project createProject(Project project, User user) throws Exception;
+    void createProject(ProjectCreate projectCreate, User user) throws Exception;
 
     List<Project> getProjectByTeam(User user, String category, String tag) throws Exception;
 

@@ -3,6 +3,7 @@ package com.wally.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -22,19 +23,27 @@ public class Project {
     private String description;
     private String category;
 
-
+    @ElementCollection
     private List<String> tags = new ArrayList<>();
 
-    @OneToOne(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private Chat chat;
+//    @OneToOne(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+//    @JsonIgnore
+//    private Chat chat;
 
-    @ManyToOne
-    private User owner;
+    private Long ownerId;
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Issue> issues = new ArrayList<>();
+//    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private List<Issue> issues = new ArrayList<>();
 
-    @ManyToMany
-    private List<User> team = new ArrayList<>();
+//    @ManyToMany
+//    private List<User> team = new ArrayList<>();
+
+    @Builder
+    public Project(String name, String description, String category, List<String> tags, Long ownerId) {
+        this.name = name;
+        this.description = description;
+        this.category = category;
+        this.tags = tags;
+        this.ownerId = ownerId;
+    }
 }

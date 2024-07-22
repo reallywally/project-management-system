@@ -4,6 +4,7 @@ import com.wally.model.Chat;
 import com.wally.model.Invitation;
 import com.wally.model.Project;
 import com.wally.model.User;
+import com.wally.request.ProjectCreate;
 import com.wally.request.InviteRequest;
 import com.wally.response.MessageResponse;
 import com.wally.service.InvitationService;
@@ -50,11 +51,11 @@ public class ProjectController {
 
     @PostMapping("/projects")
     public ResponseEntity<Project> createProject(
-            @RequestBody Project project,
+            @RequestBody ProjectCreate projectCreate,
             @RequestHeader("Authorization") String jwt) throws Exception {
 
         User user = userService.findUserProfileByJwt(jwt);
-        Project createdProject = projectService.createProject(project, user);
+        Project createdProject = projectService.createProject(projectCreate, user);
 
         return new ResponseEntity<>(createdProject, HttpStatus.OK);
     }

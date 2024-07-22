@@ -21,14 +21,16 @@ public class Chat {
 
     private String name;
 
-    @OneToOne
-    private Project project;
+    private Long projectId;
 
     @JsonIgnore
     @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Message> messages = new ArrayList<>();
 
-    @Ma
-    private List<User> users = new ArrayList<>();
+    @ManyToMany
+    private List<User> users;
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Issue> issues = new ArrayList<>();
 
 }

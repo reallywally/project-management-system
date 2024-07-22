@@ -4,6 +4,7 @@ import com.wally.model.Chat;
 import com.wally.model.Project;
 import com.wally.model.User;
 import com.wally.repository.ProjectRepository;
+import com.wally.request.ProjectCreate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,28 +20,23 @@ public class ProjectServiceImpl implements ProjectService {
     private final UserService userService;
     private final ChatService chatService;
 
-
     @Override
-    public Project createProject(Project project, User user) throws Exception {
-        Project createdProject = new Project();
+    public void createProject(ProjectCreate projectCreate, User user) throws Exception {
+        Project createdProject = Project.builder()
+                .ownerId(user.getId())
+                .name(projectCreate.getName())
+                .category(projectCreate.getCategory())
+                .description(projectCreate.getDescription())
+                .build();
 
-        createdProject.setOwner(user);
-        createdProject.setTags(project.getTags());
-        createdProject.setName(project.getName());
-        createdProject.setCategory(project.getCategory());
-        createdProject.setDescription(project.getDescription());
-        createdProject.getTeam().add(user);
-
-        Project savedProject = projectRepository.save(createdProject);
+        projectRepository.save(createdProject);
 
         // 이건 ChatService에서 하는게 맞지 않나
-        Chat chat = new Chat();
-        chat.setProject(savedProject);
-
-        Chat projectedChat = chatService.createChat(chat);
-        savedProject.setChat(projectedChat);
-
-        return savedProject;
+//        Chat chat = new Chat();
+//        chat.setProject(savedProject);
+//
+//        Chat projectedChat = chatService.createChat(chat);
+//        savedProject.setChat(projectedChat);
     }
 
     @Override
@@ -127,6 +123,6 @@ public class ProjectServiceImpl implements ProjectService {
     public List<Project> searchProject(String keyword, User user) throws Exception {
         String partinalName = "% " + keyword + "%";
 
-        return projectRepository.findByNameContainingAndTeamContaining(partinalName, user);
+        return projectRepository.findByNameContainingAndTeamContains(partinalName, user);
     }
 }

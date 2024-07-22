@@ -53,7 +53,7 @@ public class IssueController {
         issueDto.setPriority(issue.getPriority());
         issueDto.setStatus(issue.getStatus());
         issueDto.setDueDate(issue.getDueDate());
-        issueDto.setProjectId(issue.getProjectId());
+        // issueDto.setProjectId(issue.getProjectId());
 
 
         return ResponseEntity.ok(issueDto);

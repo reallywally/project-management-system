@@ -18,18 +18,19 @@ public class Issue {
     private String title;
     private String description;
     private String status;
-    private Long projectId;
     private String priority;
     private LocalDate dueDate;
     private List<String> tag = new ArrayList<>();
 
-    @ManyToOne
-    private User assignee;
+//    @ManyToOne
+//    private User assignee;
+    private Long assigneeId;
 
-    @JsonIgnore
-    @ManyToOne
-    private Project project;
+//    @JsonIgnore
+//    @ManyToOne
+//    private Project project;
+    private Long projectId;
 
-    @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Comment> comments = new ArrayList<>();
+//    @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private List<Comment> comments = new ArrayList<>();
 }

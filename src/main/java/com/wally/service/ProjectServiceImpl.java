@@ -38,7 +38,10 @@ public class ProjectServiceImpl implements ProjectService {
                 .description(projectCreate.getDescription())
                 .build();
 
-        projectRepository.save(createdProject);
+        Project project = projectRepository.save(createdProject);
+
+        addProjectUser(project.getId(), userId);
+
 
         // 이건 ChatService에서 하는게 맞지 않나
 //        Chat chat = new Chat();
@@ -113,6 +116,17 @@ public class ProjectServiceImpl implements ProjectService {
     public List<Project> searchProject(String keyword, User user) throws Exception {
         String partinalName = "% " + keyword + "%";
 
-        return projectRepository.findByNameContainingAndTeamContains(partinalName, user);
+        return null;
+        //return projectRepository.findByNameContainingAndTeamContains(partinalName, user);
+    }
+
+    // private -----------------------------------------------------
+    private void addProjectUser(Long projectId, Long userId) {
+        ProjectUser projectUser = ProjectUser.builder()
+                .projectId(projectId)
+                .userId(userId)
+                .build();
+
+        projectUserRepository.save(projectUser);
     }
 }

@@ -3,12 +3,10 @@
     <h2>Login</h2>
     <form @submit.prevent="handleLogin">
       <div>
-        <label for="username">Username:</label>
-        <input type="text" v-model="username" />
+        Email:<input type="text" v-model="email" />
       </div>
       <div>
-        <label for="password">Password:</label>
-        <input type="password" v-model="password" />
+        Password:<input type="password" v-model="password" />
       </div>
       <button type="submit">Login</button>
     </form>
@@ -18,12 +16,12 @@
 
 <script>
 import axios from 'axios';
-import { saveToken, getToken } from '../auth';
+import { saveToken, getToken } from '@/auth';
 
 export default {
   data() {
     return {
-      username: '',
+      email: '',
       password: '',
       error: ''
     };
@@ -31,10 +29,11 @@ export default {
   methods: {
     async handleLogin() {
       try {
-        const response = await axios.post('localhost:8000/api/login', {
-          username: this.username,
+        const response = await axios.post('http://localhost:8080/auth/signin', {
+          email: this.email,
           password: this.password
         });
+        console.log(response);
         saveToken(response.data.token);
         this.$router.push('/dashboard');
       } catch (err) {

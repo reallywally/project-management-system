@@ -83,7 +83,7 @@ public class IssueController {
         return ResponseEntity.ok(issue);
     }
 
-    @PutMapping("/issues/{issueId}/status/{status")
+    @PutMapping("/issues/{issueId}/status/{status}")
     public ResponseEntity<Issue> updateIssueStatus(
             @PathVariable Long issueId,
             @PathVariable String status) throws Exception {

@@ -49,23 +49,8 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public List<Project> getProjectList(ProjectSearch projectSearch) throws Exception {
-        Page<ProjectResp> list = projectRepository.getList(projectSearch);
-//        List<Project> projects = projectRepository.findByTeamContainingOrOwner(user, user);
-//
-//        if (category != null) {
-//            projects = projects.stream()
-//                    .filter(project -> project.getCategory().equals(category))
-//                    .collect(Collectors.toList());
-//        }
-//
-//        if (tag != null) {
-//            projects = projects.stream()
-//                    .filter(project -> project.getTags().contains(tag))
-//                    .collect(Collectors.toList());
-//        }
-
-        return null;
+    public Page<ProjectResp> getProjectList(ProjectSearch projectSearch) throws Exception {
+        return  projectRepository.getList(projectSearch);
     }
 
     @Override
@@ -86,9 +71,9 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public void updateProject(ProjectUpdate projectUpdate, Long id) throws Exception {
+    public void updateProject(ProjectUpdate projectUpdate, Long projectId) throws Exception {
 
-        Project project = getProjectById(id);
+        Project project = getProjectById(projectId);
 
         project.update(projectUpdate);
     }

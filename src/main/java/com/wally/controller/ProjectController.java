@@ -9,10 +9,12 @@ import com.wally.request.InviteRequest;
 import com.wally.request.ProjectSearch;
 import com.wally.request.ProjectUpdate;
 import com.wally.response.MessageResponse;
+import com.wally.response.ProjectResp;
 import com.wally.service.InvitationService;
 import com.wally.service.ProjectService;
 import com.wally.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,12 +41,12 @@ public class ProjectController {
     }
 
     @GetMapping("/projects")
-    public ResponseEntity<List<Project>> getProjects(
+    public ResponseEntity<Page<ProjectResp>> getProjects(
             @ModelAttribute ProjectSearch projectSearch,
             @RequestHeader("Authorization") String jwt) throws Exception {
 
         User user = userService.findUserProfileByJwt(jwt);
-        List<Project> projects= projectService.getProjectList(projectSearch);
+        Page<ProjectResp> projects= projectService.getProjectList(projectSearch);
 
         return new ResponseEntity<>(projects, HttpStatus.OK);
     }

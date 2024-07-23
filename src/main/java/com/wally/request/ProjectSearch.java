@@ -15,7 +15,7 @@ import static java.lang.Math.min;
 public class ProjectSearch {
     private String name;
     private String category;
-    private List<String> tags = new ArrayList<>();
+    // private List<String> tags = new ArrayList<>();
     private Long ownerId;
 
     // 페이징 정보

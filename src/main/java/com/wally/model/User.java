@@ -18,9 +18,9 @@ public class User {
     private String email;
     private String password;
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "assignee", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Issue> assignedIssues = new ArrayList<>();
+//    @JsonIgnore
+//    @OneToMany(mappedBy = "assignee", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    private List<Issue> assignedIssues = new ArrayList<>();
 
     private int projectSize;
 }

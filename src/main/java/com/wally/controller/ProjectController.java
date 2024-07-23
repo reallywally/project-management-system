@@ -6,6 +6,7 @@ import com.wally.model.Project;
 import com.wally.model.User;
 import com.wally.request.ProjectCreate;
 import com.wally.request.InviteRequest;
+import com.wally.request.ProjectSearch;
 import com.wally.request.ProjectUpdate;
 import com.wally.response.MessageResponse;
 import com.wally.service.InvitationService;
@@ -27,16 +28,25 @@ public class ProjectController {
     private final UserService userService;
     private final InvitationService invitationService;
 
-    @GetMapping("/projects")
-    public ResponseEntity<List<Project>> getProjects(
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String tag,
+    @PostMapping("/projects")
+    public void createProject(
+            @RequestBody ProjectCreate projectCreate,
             @RequestHeader("Authorization") String jwt) throws Exception {
 
         User user = userService.findUserProfileByJwt(jwt);
-        List<Project> projectByTeam = projectService.getProjectByTeam(user, category, tag);
 
-        return new ResponseEntity<>(projectByTeam, HttpStatus.OK);
+        projectService.createProject(projectCreate, user.getId());
+    }
+
+    @GetMapping("/projects")
+    public ResponseEntity<List<Project>> getProjects(
+            @ModelAttribute ProjectSearch projectSearch,
+            @RequestHeader("Authorization") String jwt) throws Exception {
+
+        User user = userService.findUserProfileByJwt(jwt);
+        List<Project> projects= projectService.getProjectList(projectSearch);
+
+        return new ResponseEntity<>(projects, HttpStatus.OK);
     }
 
     @GetMapping("/projects/{projectId}")
@@ -50,14 +60,7 @@ public class ProjectController {
         return new ResponseEntity<>(project, HttpStatus.OK);
     }
 
-    @PostMapping("/projects")
-    public void createProject(
-            @RequestBody ProjectCreate projectCreate,
-            @RequestHeader("Authorization") String jwt) throws Exception {
 
-        User user = userService.findUserProfileByJwt(jwt);
-        projectService.createProject(projectCreate, user);
-    }
 
     @PatchMapping("/projects/{projectId}")
     public void updateProject(

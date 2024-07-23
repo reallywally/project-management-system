@@ -4,15 +4,16 @@ import com.wally.model.Chat;
 import com.wally.model.Project;
 import com.wally.model.User;
 import com.wally.request.ProjectCreate;
+import com.wally.request.ProjectSearch;
 import com.wally.request.ProjectUpdate;
 
 import java.util.List;
 
 public interface ProjectService {
 
-    void createProject(ProjectCreate projectCreate, User user) throws Exception;
+    void createProject(ProjectCreate projectCreate, Long userId) throws Exception;
 
-    List<Project> getProjectByTeam(User user, String category, String tag) throws Exception;
+    List<Project> getProjectList(ProjectSearch projectSearch) throws Exception;
 
     Project getProjectById(Long projectId) throws Exception;
 

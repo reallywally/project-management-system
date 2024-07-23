@@ -3,11 +3,10 @@ package com.wally.repository;
 import com.wally.model.Project;
 import com.wally.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
-public interface ProjectRepository extends JpaRepository<Project, Long> {
+public interface ProjectRepository extends JpaRepository<Project, Long>, ProjectRepositoryCustom {
 
 //    List<Project> findByOwner(User user);
 

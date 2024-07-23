@@ -5,6 +5,8 @@ import com.wally.repository.ChatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class ChatServiceImpl implements ChatService {
@@ -14,4 +16,5 @@ public class ChatServiceImpl implements ChatService {
     public Chat createChat(Chat chat) throws Exception {
         return null;
     }
+
 }

@@ -41,7 +41,7 @@ public class CommentServiceImpl implements CommentService {
 
         Comment savedComment = commentRepository.save(comment);
 
-        issueOptional.get().getComments().add(savedComment);
+        // issueOptional.get().getComments().add(savedComment);
 
         return savedComment;
 

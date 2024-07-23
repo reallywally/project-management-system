@@ -23,14 +23,14 @@ public class Chat {
 
     private Long projectId;
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Message> messages = new ArrayList<>();
+//    @JsonIgnore
+//    @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private List<Message> messages = new ArrayList<>();
 
     @ManyToMany
     private List<User> users;
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Issue> issues = new ArrayList<>();
+//    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private List<Issue> issues = new ArrayList<>();
 
 }

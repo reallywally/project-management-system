@@ -65,7 +65,7 @@ public class IssueServiceImpl implements IssueService {
         User user = userService.findUserById(userId);
         Issue issue = getIssueById(issueId);
 
-        issue.setAssignee(user);
+        // issue.setAssignee(user);
 
         return issueRepository.save(issue);
     }

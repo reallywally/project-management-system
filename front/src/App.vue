@@ -3,16 +3,22 @@
     <v-navigation-drawer v-if="isAuthenticated" app>
       <v-list>
         <v-list-item-group>
-          <v-list-item to="/client">
-            <v-list-item-content>
-              <v-list-item-title>Client</v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
           <v-list-item to="/dashboard" exact>
             <v-list-item-content>
               <v-list-item-title>Dashboard</v-list-item-title>
             </v-list-item-content>
           </v-list-item>
+          <v-list-item to="/client">
+            <v-list-item-content>
+              <v-list-item-title>Client</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item to="/project">
+            <v-list-item-content>
+              <v-list-item-title>Project</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+
         </v-list-item-group>
       </v-list>
     </v-navigation-drawer>

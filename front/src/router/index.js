@@ -3,8 +3,10 @@ import { createRouter, createWebHistory } from 'vue-router';
 import Login from '../components/Login.vue';
 import Dashboard from '../components/Dashboard.vue';
 import Client from '../components/Client.vue';
+import Project from '../views/ProjectList.vue';
 import store from '../store';
 import { isLoggedIn } from '@/auth';
+import ProjectList from "@/views/ProjectList";
 
 const routes = [
     {
@@ -22,6 +24,12 @@ const routes = [
         path: '/client',
         name: 'Client',
         component: Client,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/project',
+        name: 'Project',
+        component: ProjectList,
         meta: { requiresAuth: true }
     }
 ];

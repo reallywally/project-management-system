@@ -42,10 +42,9 @@ public class ProjectController {
 
     @GetMapping("/projects")
     public ResponseEntity<Page<ProjectResp>> getProjects(
-            @ModelAttribute ProjectSearch projectSearch,
-            @RequestHeader("Authorization") String jwt) throws Exception {
+            @ModelAttribute ProjectSearch projectSearch) throws Exception {
 
-        User user = userService.findUserProfileByJwt(jwt);
+        // User user = userService.findUserProfileByJwt(jwt);
         Page<ProjectResp> projects= projectService.getProjectList(projectSearch);
 
         return new ResponseEntity<>(projects, HttpStatus.OK);

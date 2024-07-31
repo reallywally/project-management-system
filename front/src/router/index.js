@@ -7,6 +7,7 @@ import Project from '../views/ProjectList.vue';
 import store from '../store';
 import { isLoggedIn } from '@/auth';
 import ProjectList from "@/views/ProjectList";
+import ProjectCreate from "@/components/project/ProjectCreate";
 
 const routes = [
     {
@@ -30,6 +31,12 @@ const routes = [
         path: '/project',
         name: 'Project',
         component: ProjectList,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/project/create',
+        name: 'ProjectCreate',
+        component: ProjectCreate,
         meta: { requiresAuth: true }
     }
 ];

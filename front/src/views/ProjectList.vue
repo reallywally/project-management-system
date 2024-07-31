@@ -35,7 +35,6 @@ export default {
   computed: {},
   created() {
     this.searchProjects(0, 10);
-
   },
   data() {
     return {

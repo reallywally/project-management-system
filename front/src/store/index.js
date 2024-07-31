@@ -22,7 +22,7 @@ const store = createStore({
         async login({ commit }, credentials) {
             try {
                 const response = await axios.post('http://localhost:8082/auth/signin', credentials);
-                const token = response.data.token;
+                const token = response.data.jwt;
                 commit('login', token);
             } catch (error) {
                 console.error('Error logging in:', error);

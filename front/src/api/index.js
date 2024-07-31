@@ -1,4 +1,5 @@
 import axios from "axios";
+import store from "@/store";
 
 function create(url) {
   const request = Object.assign({
@@ -13,7 +14,26 @@ function create(url) {
   return instance;
 }
 
+
+
 function registerInterceptor(instance) {
+  // 요청
+  instance.interceptors.request.use(
+      config => {
+        const token = store.getters.token;
+        console.log("------")
+        console.log(token)
+        if (token) {
+          config.headers['Authorization'] = `Bearer ${token}`;
+        }
+        return config;
+      },
+      error => {
+        return Promise.reject(error);
+      }
+  )
+
+  // 응답
   instance.interceptors.response.use(
     function (response) {
       return response;

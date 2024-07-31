@@ -16,6 +16,8 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public User findUserProfileByJwt(String jwt) throws Exception {
+        //  여기서 Bearer를 제거하게 아닐텐데
+        jwt = jwt.replace("Bearer ", "");
         String email = JwtProvider.getEmailFromToken(jwt);
 
         return findUserByEmail(email);

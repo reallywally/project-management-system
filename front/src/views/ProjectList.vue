@@ -11,20 +11,18 @@
       </v-col>
     </v-row>
     <v-row>
-      <v-col>
-        <v-list>
-          <v-list-item-group>
-            <v-list-item v-for="project in projects" :key="project.id" :to="`/project/${project.id}`">
-              <v-list-item-content>
-                <v-list-item-title>{{ project.name }}</v-list-item-title>
-              </v-list-item-content>
-            </v-list-item>
-          </v-list-item-group>
-        </v-list>
-      </v-col>
+      <v-data-table
+          :headers="headers"
+          :items="projects"
+          class="row-pointer mt-0" fixed-header
+          dense
+      >
+        <template v-slot:item.name="{ item, index}">
+          <a href="#" @click.prevent="goToDetail(item.id)">{{ item.name }}</a>
+        </template>
+      </v-data-table>
     </v-row>
   </v-container>
-
 </template>
 
 <script>
@@ -38,7 +36,12 @@ export default {
   },
   data() {
     return {
-      projects: {},
+      headers: [
+        { text: 'name', value: 'name' , width: 60, align: 'right'},
+        { text: 'description', value: 'description' , width: 60, align: 'right'},
+        { text: 'category', value: 'category' , width: 60, align: 'right'},
+      ],
+      projects: [],
       pageModel: {
         totalElements: 0,
         totalPages: 0,
@@ -54,12 +57,17 @@ export default {
 
       const res = getProjects(pageModel);
       res.then((res) => {
-        this.products = res.data.content;
+        console.log(res)
+        this.projects = res.data.content;
+
         this.pageModel = {
           totalElements: res.data.totalElements,
           totalPages: res.data.totalPages,
         };
       });
+    },
+    goToDetail(id) {
+      this.$router.push(`/projects/${id}`);
     }
   }
 }

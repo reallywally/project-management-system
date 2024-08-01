@@ -13,7 +13,7 @@
               <v-list-item-title>Client</v-list-item-title>
             </v-list-item-content>
           </v-list-item>
-          <v-list-item to="/project">
+          <v-list-item to="/projects">
             <v-list-item-content>
               <v-list-item-title>Project</v-list-item-title>
             </v-list-item-content>

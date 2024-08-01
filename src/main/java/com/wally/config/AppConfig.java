@@ -41,7 +41,7 @@ public class AppConfig {
                 cfg.setAllowedOrigins(Arrays.asList(
                         "http://localhost:3000/",
                         "http://localhost:8080/",
-                        "http://localhost:8082/"
+                        "http://localhost:8081/"
                 ));
                 cfg.setAllowedMethods(Collections.singletonList("*"));
                 cfg.setAllowCredentials(true);

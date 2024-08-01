@@ -8,6 +8,7 @@ import store from '../store';
 import { isLoggedIn } from '@/auth';
 import ProjectList from "@/views/ProjectList";
 import ProjectCreate from "@/components/project/ProjectCreate";
+import ProjectRead from "@/components/project/ProjectRead";
 
 const routes = [
     {
@@ -28,17 +29,23 @@ const routes = [
         meta: { requiresAuth: true }
     },
     {
-        path: '/project',
+        path: '/projects',
         name: 'Project',
         component: ProjectList,
         meta: { requiresAuth: true }
     },
     {
-        path: '/project/create',
+        path: '/projects/create',
         name: 'ProjectCreate',
         component: ProjectCreate,
         meta: { requiresAuth: true }
-    }
+    },
+    {
+        path: "/projects/:projectId",
+        name: "ProjectRead",
+        component: ProjectRead,
+        props: true,
+    },
 ];
 
 const router = createRouter({

@@ -1,12 +1,10 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
-import Login from '../components/Login.vue';
-import Dashboard from '../components/Dashboard.vue';
-import Client from '../components/Client.vue';
-import Project from '../views/ProjectList.vue';
+import Login from '../views/LoginView.vue';
+import Dashboard from '../views/DashboardView.vue';
+import Client from '../views/ClientView.vue';
 import store from '../store';
-import { isLoggedIn } from '@/auth';
-import ProjectList from "@/views/ProjectList";
+import ProjectView from "@/views/ProjectView";
 import ProjectCreate from "@/components/project/ProjectCreate";
 import ProjectRead from "@/components/project/ProjectRead";
 
@@ -31,7 +29,7 @@ const routes = [
     {
         path: '/projects',
         name: 'Project',
-        component: ProjectList,
+        component: ProjectView,
         meta: { requiresAuth: true }
     },
     {

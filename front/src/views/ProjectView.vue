@@ -29,7 +29,7 @@
 import {getProjects} from '@/api/project';
 
 export default {
-  name: "ProjectList",
+  name: "ProjectView",
   computed: {},
   created() {
     this.searchProjects(0, 10);

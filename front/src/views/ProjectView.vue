@@ -17,7 +17,7 @@
           class="row-pointer mt-0" fixed-header
           dense
       >
-        <template v-slot:item.name="{ item, index}">
+        <template v-slot:[`item.name`]="{ item}">
           <a href="#" @click.prevent="goToDetail(item.id)">{{ item.name }}</a>
         </template>
       </v-data-table>
@@ -25,7 +25,7 @@
   </v-container>
 </template>
 
-<script>
+<script lang="ts">>
 import {getProjects} from '@/api/project';
 
 export default {

@@ -4,9 +4,9 @@ import Login from '../views/LoginView.vue';
 import Dashboard from '../views/DashboardView.vue';
 import Client from '../views/ClientView.vue';
 import store from '../store';
-import ProjectView from "@/views/ProjectView";
-import ProjectCreate from "@/components/project/ProjectCreate";
-import ProjectRead from "@/components/project/ProjectRead";
+import ProjectView from "@/views/ProjectView.vue";
+import ProjectCreate from "@/components/project/ProjectCreate.vue";
+import ProjectRead from "@/components/project/ProjectRead.vue";
 
 const routes = [
     {
@@ -47,7 +47,7 @@ const routes = [
 ];
 
 const router = createRouter({
-    history: createWebHistory(process.env.BASE_URL),
+    history: createWebHistory(import.meta.env.BASE_URL),
     routes
 });
 

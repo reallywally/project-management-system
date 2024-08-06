@@ -25,7 +25,7 @@
   </v-container>
 </template>
 
-<script lang="ts">>
+<script lang="ts">
 import {getProjects} from '@/api/project';
 
 export default {

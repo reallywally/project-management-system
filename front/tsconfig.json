@@ -4,9 +4,15 @@
     "target": "ES5",
     "outDir": "./dist",
     "moduleResolution": "Node",
-    "lib": ["ES2015", "DOM", "DOM.Iterable"]
+    "lib": ["ES2015", "DOM", "DOM.Iterable"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
   },
-  "include": ["./src/**/*"],
+  "include": ["env.d.ts", "./src/**/*"],
   "exclude": ["node_modules", "dist"],
 
   "strict": true,

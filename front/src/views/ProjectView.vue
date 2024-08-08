@@ -25,52 +25,45 @@
   </v-container>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import ProjectRepository from "@/repository/ProjectRepository";
+import { container } from 'tsyringe'
+import Paging from '@/entity/data/Paging'
+import Project from '@/entity/project/Project'
 import {getProjects} from '@/api/project';
+import {onMounted, reactive} from "vue";
 
-export default {
-  name: "ProjectView",
-  computed: {},
-  created() {
-    this.searchProjects(0, 10);
-  },
-  data() {
-    return {
-      headers: [
-        { text: 'name', value: 'name' , width: 60, align: 'right'},
-        { text: 'description', value: 'description' , width: 60, align: 'right'},
-        { text: 'category', value: 'category' , width: 60, align: 'right'},
-      ],
-      projects: [],
-      pageModel: {
-        totalElements: 0,
-        totalPages: 0,
-      },
-    };
-  },
-  methods: {
-    searchProjects(page, size) {
-      const pageModel = {
-        page: page,
-        size: size,
-      };
+const PROJECT_REPOSITORY = container.resolve(ProjectRepository)
 
-      const res = getProjects(pageModel);
-      res.then((res) => {
-        console.log(res)
-        this.projects = res.data.content;
 
-        this.pageModel = {
-          totalElements: res.data.totalElements,
-          totalPages: res.data.totalPages,
-        };
-      });
-    },
-    goToDetail(id) {
-      this.$router.push(`/projects/${id}`);
-    }
-  }
+
+// state
+type StateType = {
+  projectList: Paging<Project>
 }
+const state = reactive<StateType>({
+  projectList: new Paging<Project>(),
+})
+
+// methods
+function getProjects(page = 1) {
+  PROJECT_REPOSITORY.getList(page)
+  .then(projectList => {
+    console.log(projectList)
+    // state.projectList = projectList
+  })
+}
+
+function goToDetail(id) {
+  this.$router.push(`/projects/${id}`);
+}
+
+onMounted(() => {
+  getProjects()
+  console.log("mounted")
+})
+
+
 </script>
 
 <style scoped>

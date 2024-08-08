@@ -16,7 +16,7 @@ export default class ProjectRepository {
     })
   }
 
-  public get(postId: number) {
+  public get(projectId: number) {
     return this.httpRepository.get<Project>({ path: `/api/projects/${projectId}` }, Project)
   }
 
@@ -25,7 +25,7 @@ export default class ProjectRepository {
       {
         path: `/api/projects?page=${page}&size=3`,
       },
-      Proeject
+      Project
     )
   }
 

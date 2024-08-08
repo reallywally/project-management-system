@@ -10,7 +10,9 @@
       "@/*": [
         "./src/*"
       ]
-    }
+    },
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": ["env.d.ts", "./src/**/*"],
   "exclude": ["node_modules", "dist"],
@@ -21,5 +23,5 @@
   "strictBindCallApply": true,
   "strictPropertyInitialization": true,
   "noImplicitThis": true,
-  "alwaysStrict": true
+  "alwaysStrict": true,
 }

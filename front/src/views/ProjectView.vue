@@ -47,6 +47,7 @@ const state = reactive<StateType>({
 
 // methods
 function getProjects(page = 1) {
+  // TODO. 왜 안되지,,
   PROJECT_REPOSITORY.getList(page)
   .then(projectList => {
     console.log(projectList)
@@ -60,7 +61,6 @@ function goToDetail(id) {
 
 onMounted(() => {
   getProjects()
-  console.log("mounted")
 })
 
 

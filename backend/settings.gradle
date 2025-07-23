@@ -1,0 +1,16 @@
+rootProject.name = 'project-management-system'
+
+// Plugin Management
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+// Dependency Resolution Management
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
+} 

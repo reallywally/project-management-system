@@ -1,42 +1,55 @@
-# Build stage
-FROM openjdk:17-jdk-slim AS build
+# Multi-stage build for Spring Boot application with Gradle
 
+# Stage 1: Build stage
+FROM openjdk:17-jdk-slim as builder
+
+# Install required packages
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
 WORKDIR /app
 
-# Copy Maven wrapper and pom.xml
-COPY mvnw .
-COPY .mvn .mvn
-COPY pom.xml .
+# Copy Gradle wrapper and build files
+COPY gradlew .
+COPY gradlew.bat .
+COPY gradle gradle
+COPY build.gradle .
+COPY settings.gradle .
+COPY gradle.properties .
 
-# Download dependencies
-RUN ./mvnw dependency:go-offline -B
+# Make gradlew executable
+RUN chmod +x ./gradlew
 
 # Copy source code
 COPY src src
 
-# Build application
-RUN ./mvnw clean package -DskipTests
+# Build the application
+RUN ./gradlew build -x test
 
-# Runtime stage
+# Stage 2: Runtime stage
 FROM openjdk:17-jre-slim
 
+# Set working directory
 WORKDIR /app
 
-# Install curl for health checks
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# Create non-root user
+RUN groupadd -r pms && useradd -r -g pms pms
 
-# Copy built jar from build stage
-COPY --from=build /app/target/*.jar app.jar
+# Copy the built JAR from builder stage
+COPY --from=builder /app/build/libs/*.jar app.jar
 
-# Create uploads directory
-RUN mkdir -p /app/uploads
+# Change ownership to non-root user
+RUN chown -R pms:pms /app
+
+# Switch to non-root user
+USER pms
 
 # Expose port
 EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8080/api/v1/actuator/health || exit 1
+  CMD curl -f http://localhost:8080/actuator/health || exit 1
 
-# Run application
+# Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"] 

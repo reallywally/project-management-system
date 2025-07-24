@@ -1,5 +1,3 @@
-rootProject.name = 'project-management-system'
-
 // Plugin Management
 pluginManagement {
     repositories {
@@ -13,4 +11,6 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
     }
-} 
+}
+
+rootProject.name = 'project-management-system'

@@ -3,7 +3,6 @@ plugins {
     id 'org.springframework.boot' version '3.3.0'
     id 'io.spring.dependency-management' version '1.1.0'
     id 'jacoco'
-    id 'com.ewerk.gradle.plugins.querydsl' version '1.0.10'
 }
 
 group = 'com.pms'
@@ -44,7 +43,7 @@ dependencies {
     // Database
     runtimeOnly 'com.mysql:mysql-connector-j'
     
-    // QueryDSL
+    // QueryDSL - Updated configuration for Spring Boot 3.x
     implementation "com.querydsl:querydsl-jpa:${querydslVersion}:jakarta"
     annotationProcessor "com.querydsl:querydsl-apt:${querydslVersion}:jakarta"
     annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
@@ -65,6 +64,12 @@ dependencies {
     // Development Tools
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+    
     // Test Dependencies
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
@@ -76,27 +81,20 @@ dependencies {
     testImplementation 'org.testcontainers:mysql'
 }
 
-// QueryDSL Configuration
-def querydslDir = "$buildDir/generated/querydsl"
-
-querydsl {
-    jpa = true
-    querydslSourcesDir = querydslDir
-}
+// QueryDSL Configuration for Spring Boot 3.x
+def generatedDir = "$buildDir/generated/sources/annotationProcessor/java/main"
 
 sourceSets {
-    main.java.srcDir querydslDir
+    main.java.srcDirs += generatedDir
 }
 
-compileQuerydsl {
-    options.annotationProcessorPath = configurations.querydsl
+tasks.withType(JavaCompile) {
+    options.generatedSourceOutputDirectory = file(generatedDir)
 }
 
-configurations {
-    compileOnly {
-        extendsFrom annotationProcessor
-    }
-    querydsl.extendsFrom compileClasspath
+// Clean generated QueryDSL files
+clean {
+    delete file(generatedDir)
 }
 
 // Test Configuration
@@ -172,9 +170,4 @@ springBoot {
 jar {
     enabled = false
     archiveClassifier = ''
-}
-
-// Clean QueryDSL generated files
-clean {
-    delete file(querydslDir)
 } 

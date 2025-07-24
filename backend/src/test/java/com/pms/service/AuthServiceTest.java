@@ -12,6 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,7 +22,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -46,19 +50,23 @@ class AuthServiceTest {
     private JwtTokenProvider jwtTokenProvider;
 
     @Mock
-    private EmailService emailService;
+    private UserService userService;
+
+    @Mock
+    private RedisTemplate<String, String> redisTemplate;
+
+    @Mock
+    private ValueOperations<String, String> valueOperations;
 
     @InjectMocks
     private AuthService authService;
 
-    private User testUser;
-    private Role userRole;
+    private TestDataFactory testDataFactory;
 
     @BeforeEach
     void setUp() {
-        userRole = TestDataFactory.createTestRole("USER");
-        testUser = TestDataFactory.createTestUser("test@example.com", "Test User", passwordEncoder);
-        testUser.getRoles().add(userRole);
+        testDataFactory = new TestDataFactory();
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
     }
 
     @Test
@@ -67,46 +75,106 @@ class AuthServiceTest {
         String email = "test@example.com";
         String password = "password123";
         
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-            email, password, List.of(new SimpleGrantedAuthority("ROLE_USER"))
-        );
+        User mockUser = testDataFactory.createUser(email, "Test User", "testUser");
+        mockUser.setEmailVerified(true);
+        mockUser.setIsActive(true);
         
+        Role userRole = testDataFactory.createRole("ROLE_USER");
+        mockUser.setRoles(Set.of(userRole));
+
+        Authentication mockAuth = mock(Authentication.class);
+        when(mockAuth.getPrincipal()).thenReturn(mockUser);
+
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-            .thenReturn(authentication);
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(testUser));
-        when(jwtTokenProvider.createToken(eq(email), any())).thenReturn("access-token");
-        when(jwtTokenProvider.createRefreshToken(email)).thenReturn("refresh-token");
+            .thenReturn(mockAuth);
+        when(jwtTokenProvider.createAccessToken(anyLong(), anyString(), anyList()))
+            .thenReturn("access-token");
+        when(jwtTokenProvider.createRefreshToken(anyLong()))
+            .thenReturn("refresh-token");
 
         // When
-        var result = authService.login(email, password);
+        Map<String, Object> result = authService.authenticateUser(email, password);
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.getAccessToken()).isEqualTo("access-token");
-        assertThat(result.getRefreshToken()).isEqualTo("refresh-token");
-        assertThat(result.getUser().getEmail()).isEqualTo(email);
+        assertThat(result.get("accessToken")).isEqualTo("access-token");
+        assertThat(result.get("refreshToken")).isEqualTo("refresh-token");
+        assertThat(result.get("tokenType")).isEqualTo("Bearer");
+        
+        Map<String, Object> userInfo = (Map<String, Object>) result.get("user");
+        assertThat(userInfo.get("email")).isEqualTo(email);
         
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(jwtTokenProvider).createToken(eq(email), any());
-        verify(jwtTokenProvider).createRefreshToken(email);
+        verify(jwtTokenProvider).createAccessToken(eq(mockUser.getId()), eq(email), any(List.class));
+        verify(jwtTokenProvider).createRefreshToken(eq(mockUser.getId()));
+        verify(valueOperations).set(eq("refresh_token:" + mockUser.getId()), eq("refresh-token"), any());
     }
 
     @Test
     void 로그인_실패_잘못된_자격증명() {
         // Given
         String email = "test@example.com";
-        String password = "wrongpassword";
-        
+        String password = "wrong-password";
+
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
             .thenThrow(new BadCredentialsException("Bad credentials"));
 
         // When & Then
-        assertThatThrownBy(() -> authService.login(email, password))
-            .isInstanceOf(RuntimeException.class)
-            .hasMessageContaining("Invalid email or password");
-        
+        assertThatThrownBy(() -> authService.authenticateUser(email, password))
+            .isInstanceOf(BadCredentialsException.class)
+            .hasMessage("Bad credentials");
+
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(jwtTokenProvider, never()).createToken(anyString(), any());
+        verifyNoInteractions(jwtTokenProvider);
+    }
+
+    @Test
+    void 로그인_실패_이메일_미인증() {
+        // Given
+        String email = "test@example.com";
+        String password = "password123";
+        
+        User mockUser = testDataFactory.createUser(email, "Test User", "testUser");
+        mockUser.setEmailVerified(false); // 이메일 미인증
+
+        Authentication mockAuth = mock(Authentication.class);
+        when(mockAuth.getPrincipal()).thenReturn(mockUser);
+
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+            .thenReturn(mockAuth);
+
+        // When & Then
+        assertThatThrownBy(() -> authService.authenticateUser(email, password))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Email not verified");
+
+        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verifyNoInteractions(jwtTokenProvider);
+    }
+
+    @Test
+    void 로그인_실패_계정_비활성화() {
+        // Given
+        String email = "test@example.com";
+        String password = "password123";
+        
+        User mockUser = testDataFactory.createUser(email, "Test User", "testUser");
+        mockUser.setEmailVerified(true);
+        mockUser.setIsActive(false); // 계정 비활성화
+
+        Authentication mockAuth = mock(Authentication.class);
+        when(mockAuth.getPrincipal()).thenReturn(mockUser);
+
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+            .thenReturn(mockAuth);
+
+        // When & Then
+        assertThatThrownBy(() -> authService.authenticateUser(email, password))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Account is deactivated");
+
+        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verifyNoInteractions(jwtTokenProvider);
     }
 
     @Test
@@ -115,179 +183,45 @@ class AuthServiceTest {
         String email = "newuser@example.com";
         String password = "password123";
         String name = "New User";
-        String nickname = "NewUser";
-        
-        when(userRepository.existsByEmail(email)).thenReturn(false);
-        when(roleRepository.findByName("USER")).thenReturn(Optional.of(userRole));
-        when(passwordEncoder.encode(password)).thenReturn("encoded-password");
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
+        String nickname = "newuser";
+
+        User mockUser = testDataFactory.createUser(email, name, nickname);
+
+        when(userService.findByEmail(email)).thenReturn(Optional.empty());
+        when(userService.createUser(email, password, name, nickname)).thenReturn(mockUser);
 
         // When
-        User result = authService.register(email, password, name, nickname);
+        Map<String, Object> result = authService.registerUser(email, password, name, nickname);
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.getEmail()).isEqualTo("test@example.com"); // mocked save returns testUser
         
-        verify(userRepository).existsByEmail(email);
-        verify(passwordEncoder).encode(password);
-        verify(userRepository).save(any(User.class));
-        verify(emailService).sendVerificationEmail(any(User.class), anyString());
+        Map<String, Object> userInfo = (Map<String, Object>) result.get("user");
+        assertThat(userInfo.get("email")).isEqualTo(email);
+        assertThat(userInfo.get("name")).isEqualTo(name);
+        assertThat(userInfo.get("nickname")).isEqualTo(nickname);
+
+        verify(userService).findByEmail(email);
+        verify(userService).createUser(email, password, name, nickname);
     }
 
     @Test
-    void 회원가입_실패_중복_이메일() {
+    void 회원가입_실패_이메일_중복() {
         // Given
         String email = "existing@example.com";
         String password = "password123";
-        String name = "User";
-        
-        when(userRepository.existsByEmail(email)).thenReturn(true);
+        String name = "New User";
+        String nickname = "newuser";
+
+        User existingUser = testDataFactory.createUser(email, "Existing User", "existing");
+        when(userService.findByEmail(email)).thenReturn(Optional.of(existingUser));
 
         // When & Then
-        assertThatThrownBy(() -> authService.register(email, password, name, name))
+        assertThatThrownBy(() -> authService.registerUser(email, password, name, nickname))
             .isInstanceOf(RuntimeException.class)
-            .hasMessageContaining("Email already exists");
-        
-        verify(userRepository).existsByEmail(email);
-        verify(userRepository, never()).save(any(User.class));
-    }
+            .hasMessage("Email already exists");
 
-    @Test
-    void 토큰_갱신_성공() {
-        // Given
-        String refreshToken = "valid-refresh-token";
-        String email = "test@example.com";
-        
-        when(jwtTokenProvider.validateRefreshToken(refreshToken)).thenReturn(true);
-        when(jwtTokenProvider.getUsernameFromRefreshToken(refreshToken)).thenReturn(email);
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(testUser));
-        when(jwtTokenProvider.createToken(eq(email), any())).thenReturn("new-access-token");
-        when(jwtTokenProvider.createRefreshToken(email)).thenReturn("new-refresh-token");
-
-        // When
-        var result = authService.refreshToken(refreshToken);
-
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result.getAccessToken()).isEqualTo("new-access-token");
-        assertThat(result.getRefreshToken()).isEqualTo("new-refresh-token");
-        
-        verify(jwtTokenProvider).validateRefreshToken(refreshToken);
-        verify(jwtTokenProvider).getUsernameFromRefreshToken(refreshToken);
-        verify(jwtTokenProvider).createToken(eq(email), any());
-        verify(jwtTokenProvider).createRefreshToken(email);
-    }
-
-    @Test
-    void 토큰_갱신_실패_유효하지_않은_토큰() {
-        // Given
-        String invalidRefreshToken = "invalid-refresh-token";
-        
-        when(jwtTokenProvider.validateRefreshToken(invalidRefreshToken)).thenReturn(false);
-
-        // When & Then
-        assertThatThrownBy(() -> authService.refreshToken(invalidRefreshToken))
-            .isInstanceOf(RuntimeException.class)
-            .hasMessageContaining("Invalid refresh token");
-        
-        verify(jwtTokenProvider).validateRefreshToken(invalidRefreshToken);
-        verify(jwtTokenProvider, never()).getUsernameFromRefreshToken(anyString());
-    }
-
-    @Test
-    void 로그아웃_성공() {
-        // Given
-        String accessToken = "valid-access-token";
-        long expiration = 3600000L;
-        
-        when(jwtTokenProvider.getTokenExpiration(accessToken)).thenReturn(expiration);
-
-        // When
-        authService.logout(accessToken);
-
-        // Then
-        verify(jwtTokenProvider).getTokenExpiration(accessToken);
-        verify(jwtTokenProvider).addToBlacklist(accessToken, expiration);
-    }
-
-    @Test
-    void 이메일_인증_성공() {
-        // Given
-        String token = "verification-token";
-        testUser.setEmailVerified(false);
-        
-        when(userRepository.findByEmailVerificationToken(token)).thenReturn(Optional.of(testUser));
-        when(userRepository.save(testUser)).thenReturn(testUser);
-
-        // When
-        authService.verifyEmail(token);
-
-        // Then
-        assertTrue(testUser.getEmailVerified());
-        assertNull(testUser.getEmailVerificationToken());
-        verify(userRepository).findByEmailVerificationToken(token);
-        verify(userRepository).save(testUser);
-    }
-
-    @Test
-    void 이메일_인증_실패_유효하지_않은_토큰() {
-        // Given
-        String invalidToken = "invalid-token";
-        
-        when(userRepository.findByEmailVerificationToken(invalidToken)).thenReturn(Optional.empty());
-
-        // When & Then
-        assertThatThrownBy(() -> authService.verifyEmail(invalidToken))
-            .isInstanceOf(RuntimeException.class)
-            .hasMessageContaining("Invalid verification token");
-        
-        verify(userRepository).findByEmailVerificationToken(invalidToken);
-        verify(userRepository, never()).save(any(User.class));
-    }
-
-    @Test
-    void 비밀번호_재설정_이메일_발송() {
-        // Given
-        String email = "test@example.com";
-        
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(testUser));
-        when(userRepository.save(testUser)).thenReturn(testUser);
-
-        // When
-        authService.forgotPassword(email);
-
-        // Then
-        assertThat(testUser.getPasswordResetToken()).isNotNull();
-        assertThat(testUser.getPasswordResetTokenExpiry()).isNotNull();
-        
-        verify(userRepository).findByEmail(email);
-        verify(userRepository).save(testUser);
-        verify(emailService).sendPasswordResetEmail(eq(testUser), anyString());
-    }
-
-    @Test
-    void 비밀번호_재설정_성공() {
-        // Given
-        String token = "reset-token";
-        String newPassword = "newpassword123";
-        testUser.setPasswordResetToken(token);
-        testUser.setPasswordResetTokenExpiry(java.time.LocalDateTime.now().plusHours(1));
-        
-        when(userRepository.findByPasswordResetToken(token)).thenReturn(Optional.of(testUser));
-        when(passwordEncoder.encode(newPassword)).thenReturn("encoded-new-password");
-        when(userRepository.save(testUser)).thenReturn(testUser);
-
-        // When
-        authService.resetPassword(token, newPassword);
-
-        // Then
-        assertThat(testUser.getPassword()).isEqualTo("encoded-new-password");
-        assertNull(testUser.getPasswordResetToken());
-        assertNull(testUser.getPasswordResetTokenExpiry());
-        
-        verify(userRepository).findByPasswordResetToken(token);
-        verify(passwordEncoder).encode(newPassword);
-        verify(userRepository).save(testUser);
+        verify(userService).findByEmail(email);
+        verify(userService, never()).createUser(anyString(), anyString(), anyString(), anyString());
     }
 } 

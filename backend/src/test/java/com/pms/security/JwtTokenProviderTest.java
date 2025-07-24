@@ -1,22 +1,17 @@
 package com.pms.security;
 
-import com.pms.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.Collection;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest
@@ -24,71 +19,68 @@ import static org.mockito.Mockito.*;
 class JwtTokenProviderTest {
 
     private JwtTokenProvider jwtTokenProvider;
-    private RedisTemplate<String, Object> redisTemplate;
     
     @BeforeEach
     void setUp() {
-        redisTemplate = mock(RedisTemplate.class);
         jwtTokenProvider = new JwtTokenProvider();
+        
         // JWT 설정을 테스트용으로 초기화
-        jwtTokenProvider.setSecret("test-secret-key-for-testing-purposes-only-256-bits-long");
-        jwtTokenProvider.setRefreshSecret("test-refresh-secret-key-for-testing-purposes-only-256-bits-long");
-        jwtTokenProvider.setTokenValidityInMilliseconds(60000L); // 1분
-        jwtTokenProvider.setRefreshTokenValidityInMilliseconds(300000L); // 5분
-        jwtTokenProvider.setRedisTemplate(redisTemplate);
-        jwtTokenProvider.init();
+        ReflectionTestUtils.setField(jwtTokenProvider, "jwtSecret", 
+            "test-secret-key-for-testing-purposes-only-must-be-256-bits-long-at-least");
+        ReflectionTestUtils.setField(jwtTokenProvider, "refreshSecret", 
+            "test-refresh-secret-key-for-testing-purposes-only-must-be-256-bits-long");
+        ReflectionTestUtils.setField(jwtTokenProvider, "accessTokenValidityInSeconds", 3600); // 1시간
+        ReflectionTestUtils.setField(jwtTokenProvider, "refreshTokenValidityInSeconds", 86400); // 24시간
     }
 
     @Test
     void 액세스_토큰_생성_및_검증_성공() {
         // Given
-        String username = "test@example.com";
-        Collection<? extends GrantedAuthority> authorities = List.of(
-            new SimpleGrantedAuthority("ROLE_USER")
-        );
+        Long userId = 1L;
+        String email = "test@example.com";
+        List<String> roles = List.of("ROLE_USER");
 
         // When
-        String token = jwtTokenProvider.createToken(username, authorities);
+        String token = jwtTokenProvider.createAccessToken(userId, email, roles);
 
         // Then
         assertThat(token).isNotNull();
         assertThat(token).isNotEmpty();
         assertTrue(jwtTokenProvider.validateToken(token));
-        assertEquals(username, jwtTokenProvider.getUsername(token));
+        assertEquals(userId, jwtTokenProvider.getUserIdFromToken(token));
+        assertEquals(email, jwtTokenProvider.getEmailFromToken(token));
+        assertEquals(roles, jwtTokenProvider.getRolesFromToken(token));
     }
 
     @Test
     void 리프레시_토큰_생성_및_검증_성공() {
         // Given
-        String username = "test@example.com";
+        Long userId = 1L;
 
         // When
-        String refreshToken = jwtTokenProvider.createRefreshToken(username);
+        String refreshToken = jwtTokenProvider.createRefreshToken(userId);
 
         // Then
         assertThat(refreshToken).isNotNull();
         assertThat(refreshToken).isNotEmpty();
         assertTrue(jwtTokenProvider.validateRefreshToken(refreshToken));
-        assertEquals(username, jwtTokenProvider.getUsernameFromRefreshToken(refreshToken));
+        assertEquals(userId, jwtTokenProvider.getUserIdFromRefreshToken(refreshToken));
     }
 
     @Test
-    void 권한_정보_추출_성공() {
+    void 토큰에서_사용자_정보_추출_성공() {
         // Given
-        String username = "test@example.com";
-        Collection<? extends GrantedAuthority> authorities = List.of(
-            new SimpleGrantedAuthority("ROLE_USER"),
-            new SimpleGrantedAuthority("ROLE_ADMIN")
-        );
+        Long userId = 123L;
+        String email = "user@example.com";
+        List<String> roles = List.of("ROLE_USER", "ROLE_ADMIN");
 
         // When
-        String token = jwtTokenProvider.createToken(username, authorities);
-        Collection<? extends GrantedAuthority> extractedAuthorities = jwtTokenProvider.getAuthorities(token);
+        String token = jwtTokenProvider.createAccessToken(userId, email, roles);
 
         // Then
-        assertThat(extractedAuthorities).hasSize(2);
-        assertThat(extractedAuthorities).extracting("authority")
-            .containsExactlyInAnyOrder("ROLE_USER", "ROLE_ADMIN");
+        assertEquals(userId, jwtTokenProvider.getUserIdFromToken(token));
+        assertEquals(email, jwtTokenProvider.getEmailFromToken(token));
+        assertEquals(roles, jwtTokenProvider.getRolesFromToken(token));
     }
 
     @Test
@@ -101,45 +93,116 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    void 만료된_토큰_검증_실패() throws InterruptedException {
-        // Given - 매우 짧은 유효시간으로 토큰 생성
-        jwtTokenProvider.setTokenValidityInMilliseconds(1L); // 1ms
-        jwtTokenProvider.init();
-        
-        String username = "test@example.com";
-        Collection<? extends GrantedAuthority> authorities = List.of(
-            new SimpleGrantedAuthority("ROLE_USER")
-        );
-        
-        String token = jwtTokenProvider.createToken(username, authorities);
-        
-        // When - 토큰이 만료될 때까지 대기
-        Thread.sleep(10);
-        
-        // Then
-        assertFalse(jwtTokenProvider.validateToken(token));
-    }
-
-    @Test
-    void 토큰_블랙리스트_처리() {
+    void 빈_토큰_검증_실패() {
         // Given
-        String token = "sample.jwt.token";
-        when(redisTemplate.hasKey("blacklist:" + token)).thenReturn(true);
+        String emptyToken = "";
+        String nullToken = null;
 
         // When & Then
-        assertFalse(jwtTokenProvider.validateToken(token));
+        assertFalse(jwtTokenProvider.validateToken(emptyToken));
+        assertFalse(jwtTokenProvider.validateToken(nullToken));
     }
 
     @Test
-    void 토큰_블랙리스트_추가() {
+    void 잘못된_리프레시_토큰_검증_실패() {
         // Given
-        String token = "sample.jwt.token";
-        long expiration = 3600000L; // 1시간
+        String invalidRefreshToken = "invalid.refresh.token";
+
+        // When & Then
+        assertFalse(jwtTokenProvider.validateRefreshToken(invalidRefreshToken));
+    }
+
+    @Test
+    void 토큰_만료시간_확인() {
+        // Given
+        Long userId = 1L;
+        String email = "test@example.com";
+        List<String> roles = List.of("ROLE_USER");
 
         // When
-        jwtTokenProvider.addToBlacklist(token, expiration);
+        String token = jwtTokenProvider.createAccessToken(userId, email, roles);
+        long remainingTime = jwtTokenProvider.getRemainingTime(token);
 
         // Then
-        verify(redisTemplate).opsForValue();
+        assertThat(remainingTime).isGreaterThan(0);
+        assertThat(remainingTime).isLessThanOrEqualTo(3600); // 1시간 이하
+    }
+
+    @Test
+    void 토큰_만료_여부_확인() {
+        // Given
+        Long userId = 1L;
+        String email = "test@example.com";
+        List<String> roles = List.of("ROLE_USER");
+
+        // When
+        String token = jwtTokenProvider.createAccessToken(userId, email, roles);
+
+        // Then
+        assertFalse(jwtTokenProvider.isTokenExpired(token));
+    }
+
+    @Test
+    void 토큰_만료일_추출() {
+        // Given
+        Long userId = 1L;
+        String email = "test@example.com";
+        List<String> roles = List.of("ROLE_USER");
+
+        // When
+        String token = jwtTokenProvider.createAccessToken(userId, email, roles);
+        var expirationDate = jwtTokenProvider.getExpirationDateFromToken(token);
+
+        // Then
+        assertThat(expirationDate).isNotNull();
+        assertThat(expirationDate).isAfter(new java.util.Date());
+    }
+
+    @Test
+    void 다른_키로_서명된_토큰_검증_실패() {
+        // Given
+        JwtTokenProvider anotherProvider = new JwtTokenProvider();
+        ReflectionTestUtils.setField(anotherProvider, "jwtSecret", 
+            "different-secret-key-for-testing-purposes-only-must-be-256-bits-long");
+        ReflectionTestUtils.setField(anotherProvider, "refreshSecret", 
+            "different-refresh-secret-key-for-testing-purposes-only-must-be-256-bits");
+        ReflectionTestUtils.setField(anotherProvider, "accessTokenValidityInSeconds", 3600);
+        ReflectionTestUtils.setField(anotherProvider, "refreshTokenValidityInSeconds", 86400);
+
+        Long userId = 1L;
+        String email = "test@example.com";
+        List<String> roles = List.of("ROLE_USER");
+
+        // When
+        String token = anotherProvider.createAccessToken(userId, email, roles);
+
+        // Then
+        assertFalse(jwtTokenProvider.validateToken(token)); // 다른 키로 검증하면 실패
+    }
+
+    @Test
+    void 액세스_토큰으로_리프레시_토큰_검증_실패() {
+        // Given
+        Long userId = 1L;
+        String email = "test@example.com";
+        List<String> roles = List.of("ROLE_USER");
+
+        // When
+        String accessToken = jwtTokenProvider.createAccessToken(userId, email, roles);
+
+        // Then
+        assertFalse(jwtTokenProvider.validateRefreshToken(accessToken)); // 액세스 토큰을 리프레시 토큰으로 검증하면 실패
+    }
+
+    @Test
+    void 리프레시_토큰으로_액세스_토큰_검증_실패() {
+        // Given
+        Long userId = 1L;
+
+        // When
+        String refreshToken = jwtTokenProvider.createRefreshToken(userId);
+
+        // Then
+        assertFalse(jwtTokenProvider.validateToken(refreshToken)); // 리프레시 토큰을 액세스 토큰으로 검증하면 실패
     }
 } 

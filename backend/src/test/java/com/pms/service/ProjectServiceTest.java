@@ -187,7 +187,7 @@ class ProjectServiceTest {
         // Given
         Long projectId = 1L;
         Long userId = 2L;
-        ProjectMember.Role role = ProjectMember.Role.MEMBER;
+        ProjectMember.Role role = ProjectMember.Role.DEVELOPER;
         
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(testProject));
         when(userRepository.findById(userId)).thenReturn(Optional.of(member));
@@ -220,7 +220,7 @@ class ProjectServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(owner));
 
         // When & Then
-        assertThatThrownBy(() -> projectService.addMember(projectId, userId, ProjectMember.Role.MEMBER))
+        assertThatThrownBy(() -> projectService.addMember(projectId, userId, ProjectMember.Role.DEVELOPER))
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("User is already a member");
         
@@ -233,7 +233,7 @@ class ProjectServiceTest {
         Long projectId = 1L;
         Long userId = 2L;
         
-        ProjectMember memberToRemove = TestDataFactory.createTestProjectMember(testProject, member, ProjectMember.Role.MEMBER);
+        ProjectMember memberToRemove = TestDataFactory.createTestProjectMember(testProject, member, ProjectMember.Role.DEVELOPER);
         testProject.addMember(memberToRemove);
         
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(testProject));

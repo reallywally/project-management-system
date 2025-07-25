@@ -1,5 +1,6 @@
 package com.pms.security;
 
+import com.pms.service.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -7,10 +8,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 
@@ -24,6 +28,12 @@ class JwtAuthenticationFilterTest {
     private JwtTokenProvider jwtTokenProvider;
 
     @Mock
+    private UserService userService;
+
+    @Mock
+    private RedisTemplate<String, String> redisTemplate;
+
+    @Mock
     private HttpServletRequest request;
 
     @Mock
@@ -33,14 +43,18 @@ class JwtAuthenticationFilterTest {
     private FilterChain filterChain;
 
     @Mock
-    private Authentication authentication;
+    private UserDetails userDetails;
 
+    @InjectMocks
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @BeforeEach
     void setUp() {
-        jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtTokenProvider);
         SecurityContextHolder.clearContext();
+        // Reflection을 사용해서 private 필드에 Mock 주입
+        ReflectionTestUtils.setField(jwtAuthenticationFilter, "tokenProvider", jwtTokenProvider);
+        ReflectionTestUtils.setField(jwtAuthenticationFilter, "userService", userService);
+        ReflectionTestUtils.setField(jwtAuthenticationFilter, "redisTemplate", redisTemplate);
     }
 
     @Test
@@ -48,17 +62,23 @@ class JwtAuthenticationFilterTest {
         // Given
         String token = "valid.jwt.token";
         String authHeader = "Bearer " + token;
+        Long userId = 1L;
         
         when(request.getHeader("Authorization")).thenReturn(authHeader);
         when(jwtTokenProvider.validateToken(token)).thenReturn(true);
-        when(jwtTokenProvider.getAuthentication(token)).thenReturn(authentication);
+        when(redisTemplate.hasKey("blacklist:" + token)).thenReturn(false);
+        when(jwtTokenProvider.getUserIdFromToken(token)).thenReturn(userId);
+        when(userService.loadUserByUserId(userId)).thenReturn(userDetails);
 
         // When
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         // Then
-        assertThat(SecurityContextHolder.getContext().getAuthentication()).isEqualTo(authentication);
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
         verify(filterChain).doFilter(request, response);
+        verify(jwtTokenProvider).validateToken(token);
+        verify(jwtTokenProvider).getUserIdFromToken(token);
+        verify(userService).loadUserByUserId(userId);
     }
 
     @Test
@@ -104,7 +124,28 @@ class JwtAuthenticationFilterTest {
         // Then
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
         verify(filterChain).doFilter(request, response);
-        verify(jwtTokenProvider, never()).getAuthentication(any());
+        verify(jwtTokenProvider).validateToken(token);
+        verify(jwtTokenProvider, never()).getUserIdFromToken(any());
+    }
+
+    @Test
+    void 블랙리스트_토큰으로_인증_실패() throws ServletException, IOException {
+        // Given
+        String token = "blacklisted.jwt.token";
+        String authHeader = "Bearer " + token;
+        
+        when(request.getHeader("Authorization")).thenReturn(authHeader);
+        when(jwtTokenProvider.validateToken(token)).thenReturn(true);
+        when(redisTemplate.hasKey("blacklist:" + token)).thenReturn(true);
+
+        // When
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        // Then
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(filterChain).doFilter(request, response);
+        verify(jwtTokenProvider).validateToken(token);
+        verify(jwtTokenProvider, never()).getUserIdFromToken(any());
     }
 
     @Test

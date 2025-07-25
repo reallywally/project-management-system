@@ -90,7 +90,7 @@ class UserRepositoryTest {
     @Test  
     void 닉네임_중복_체크_true() {
         // When
-        boolean exists = userRepository.existsByNickname("Test User");
+        boolean exists = userRepository.existsByNickname(testUser.getNickname());
 
         // Then
         assertThat(exists).isTrue();
@@ -99,7 +99,7 @@ class UserRepositoryTest {
     @Test
     void 닉네임_중복_체크_false() {
         // When
-        boolean exists = userRepository.existsByNickname("New User");
+        boolean exists = userRepository.existsByNickname("New User Nickname");
 
         // Then
         assertThat(exists).isFalse();
@@ -136,7 +136,7 @@ class UserRepositoryTest {
         String resetToken = "reset-token-123";
         LocalDateTime expiry = LocalDateTime.now().plusHours(1);
         testUser.setPasswordResetToken(resetToken);
-        testUser.setPasswordResetTokenExpiry(expiry);
+        testUser.setPasswordResetExpiresAt(expiry);
         entityManager.persistAndFlush(testUser);
 
         // When
@@ -145,7 +145,7 @@ class UserRepositoryTest {
         // Then
         assertThat(result).isPresent();
         assertThat(result.get().getPasswordResetToken()).isEqualTo(resetToken);
-        assertThat(result.get().getPasswordResetTokenExpiry()).isEqualTo(expiry);
+        assertThat(result.get().getPasswordResetExpiresAt()).isEqualTo(expiry);
     }
 
     @Test
@@ -259,7 +259,8 @@ class UserRepositoryTest {
         entityManager.persistAndFlush(adminRole);
 
         User adminUser = TestDataFactory.createTestUser("admin@example.com", "Admin User", passwordEncoder);
-        adminUser.getRoles().add(adminRole);
+        adminUser.getRoles().clear(); // 기본 역할 제거
+        adminUser.getRoles().add(adminRole); // ADMIN 역할만 추가
         entityManager.persistAndFlush(adminUser);
 
         // When

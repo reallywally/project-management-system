@@ -69,7 +69,7 @@ class ProjectRepositoryTest {
         ProjectMember ownerMembership = TestDataFactory.createTestProjectMember(testProject, owner, ProjectMember.Role.OWNER);
         testProject.addMember(ownerMembership);
         
-        ProjectMember memberMembership = TestDataFactory.createTestProjectMember(testProject, member, ProjectMember.Role.MEMBER);
+        ProjectMember memberMembership = TestDataFactory.createTestProjectMember(testProject, member, ProjectMember.Role.DEVELOPER);
         testProject.addMember(memberMembership);
         
         entityManager.persistAndFlush(testProject);
@@ -120,7 +120,7 @@ class ProjectRepositoryTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         // When
-        Page<Project> result = projectRepository.findByIsPublicTrueAndStatus(Project.Status.ACTIVE, pageable);
+        Page<Project> result = projectRepository.findPublicProjects(pageable);
 
         // Then
         assertThat(result.getContent()).hasSize(1);
@@ -148,7 +148,7 @@ class ProjectRepositoryTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         // When
-        Page<Project> result = projectRepository.findUserProjectsBySearch(owner, "Test", pageable);
+        Page<Project> result = projectRepository.searchUserProjects(owner, "Test", pageable);
 
         // Then
         assertThat(result.getContent()).hasSize(1);
@@ -171,7 +171,7 @@ class ProjectRepositoryTest {
     @Test
     void 소유자별_프로젝트_조회() {
         // When
-        List<Project> result = projectRepository.findByOwnerAndStatus(owner, Project.Status.ACTIVE);
+        List<Project> result = projectRepository.findByOwner(owner);
 
         // Then
         assertThat(result).hasSize(2);
@@ -256,14 +256,16 @@ class ProjectRepositoryTest {
         archivedProject.setStatus(Project.Status.ARCHIVED);
         entityManager.persistAndFlush(archivedProject);
 
+        Pageable pageable = PageRequest.of(0, 10);
+
         // When
-        List<Project> activeProjects = projectRepository.findByStatus(Project.Status.ACTIVE);
-        List<Project> archivedProjects = projectRepository.findByStatus(Project.Status.ARCHIVED);
+        Page<Project> activeProjects = projectRepository.findByStatus(Project.Status.ACTIVE, pageable);
+        Page<Project> archivedProjects = projectRepository.findByStatus(Project.Status.ARCHIVED, pageable);
 
         // Then
-        assertThat(activeProjects).hasSize(2); // testProject + publicProject
-        assertThat(archivedProjects).hasSize(1);
-        assertThat(archivedProjects.get(0).getKey()).isEqualTo("AP");
+        assertThat(activeProjects.getContent()).hasSize(2); // testProject + publicProject
+        assertThat(archivedProjects.getContent()).hasSize(1);
+        assertThat(archivedProjects.getContent().get(0).getKey()).isEqualTo("AP");
     }
 
     @Test
@@ -289,7 +291,7 @@ class ProjectRepositoryTest {
                 .filter(m -> m.getUser().getId().equals(member.getId()))
                 .findFirst();
         assertThat(regularMember).isPresent();
-        assertThat(regularMember.get().getRole()).isEqualTo(ProjectMember.Role.MEMBER);
+        assertThat(regularMember.get().getRole()).isEqualTo(ProjectMember.Role.DEVELOPER);
     }
 
     @Test

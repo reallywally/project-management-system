@@ -4,29 +4,44 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
 
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 @Entity
 @Table(name = "label", 
        uniqueConstraints = @UniqueConstraint(name = "uk_project_label", columnNames = {"project_id", "name"}),
        indexes = @Index(name = "idx_project_id", columnList = "project_id"))
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+@ToString(exclude = {"project", "issues"})
 public class Label extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
-    @Column(nullable = false, length = 100)
-    @NotBlank
-    @Size(max = 100)
+    @NotBlank(message = "라벨명은 필수입니다")
+    @Size(max = 100, message = "라벨명은 100자 이하여야 합니다")
+    @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Column(nullable = false, length = 7)
-    @Pattern(regexp = "^#[0-9A-Fa-f]{6}$", message = "Color must be a valid hex color code")
+    @Pattern(regexp = "^#[0-9A-Fa-f]{6}$", message = "올바른 색상 코드 형식이어야 합니다 (예: #FF0000)")
+    @Column(name = "color", nullable = false, length = 7)
     private String color;
+
+    @Column(name = "description", length = 500)
+    private String description;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
@@ -35,75 +50,25 @@ public class Label extends BaseEntity {
     @ManyToMany(mappedBy = "labels")
     private Set<Issue> issues = new HashSet<>();
 
-    // Constructors
-    public Label() {}
-
+    // 편의 생성자
     public Label(String name, String color, Project project) {
         this.name = name;
         this.color = color;
         this.project = project;
     }
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
+    // 편의 메서드들
+    public void addIssue(Issue issue) {
+        issues.add(issue);
+        issue.getLabels().add(this);
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void removeIssue(Issue issue) {
+        issues.remove(issue);
+        issue.getLabels().remove(this);
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getColor() {
-        return color;
-    }
-
-    public void setColor(String color) {
-        this.color = color;
-    }
-
-    public Project getProject() {
-        return project;
-    }
-
-    public void setProject(Project project) {
-        this.project = project;
-    }
-
-    public Set<Issue> getIssues() {
-        return issues;
-    }
-
-    public void setIssues(Set<Issue> issues) {
-        this.issues = issues;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Label label = (Label) o;
-        return Objects.equals(id, label.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        return "Label{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", color='" + color + '\'' +
-                '}';
+    public int getIssueCount() {
+        return issues.size();
     }
 } 

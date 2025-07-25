@@ -157,4 +157,30 @@ public class Project extends BaseEntity {
     public void delete() {
         this.status = Status.DELETED;
     }
+
+    // ProjectResponse에서 사용하는 편의 메서드들
+    public int getIssueCount() {
+        return issues.size();
+    }
+
+    public int getMemberCount() {
+        return members.size();
+    }
+
+    public double getProgressPercentage() {
+        if (issues.isEmpty()) {
+            return 0.0;
+        }
+        
+        long completedIssues = issues.stream()
+                .filter(issue -> issue.getStatus() == Issue.Status.DONE || 
+                               issue.getStatus() == Issue.Status.CLOSED)
+                .count();
+        
+        return (double) completedIssues / issues.size() * 100.0;
+    }
+
+    public List<ProjectMember> getMembers() {
+        return members;
+    }
 } 

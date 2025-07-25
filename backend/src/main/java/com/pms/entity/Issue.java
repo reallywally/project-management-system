@@ -3,13 +3,18 @@ package com.pms.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -23,6 +28,12 @@ import java.util.Set;
     @Index(name = "idx_created_at", columnList = "created_at"),
     @Index(name = "idx_project_status_priority", columnList = "project_id, status, priority")
 })
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+@ToString(exclude = {"project", "assignee", "reporter", "parentIssue", "subIssues", "comments", "attachments", "labels"})
 public class Issue extends BaseEntity {
 
     public enum Status {
@@ -39,27 +50,16 @@ public class Issue extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
-    @Column(nullable = false, length = 500)
-    @NotBlank
-    @Size(max = 500)
+    @NotBlank(message = "제목은 필수입니다")
+    @Size(max = 500, message = "제목은 500자 이하여야 합니다")
+    @Column(name = "title", nullable = false, length = 500)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Status status = Status.TODO;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Priority priority = Priority.MEDIUM;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Type type = Type.TASK;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
@@ -73,21 +73,54 @@ public class Issue extends BaseEntity {
     @JoinColumn(name = "reporter_id", nullable = false)
     private User reporter;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_issue_id")
-    private Issue parentIssue;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private Status status = Status.TODO;
 
-    @OneToMany(mappedBy = "parentIssue", cascade = CascadeType.ALL)
-    private List<Issue> subtasks = new ArrayList<>();
+    @Enumerated(EnumType.STRING)
+    @Column(name = "priority", nullable = false, length = 20)
+    private Priority priority = Priority.MEDIUM;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false, length = 20)
+    private Type type = Type.TASK;
+
+    @Column(name = "story_points", precision = 5, scale = 2)
+    private BigDecimal storyPoints;
+
+    @Column(name = "original_estimate")
+    private Integer originalEstimate;
+
+    @Column(name = "remaining_estimate")
+    private Integer remainingEstimate;
+
+    @Column(name = "time_spent")
+    private Integer timeSpent;
+
+    @Column(name = "position", nullable = false)
+    private Integer position = 0;
 
     @Column(name = "due_date")
     private LocalDateTime dueDate;
 
-    @Column(name = "story_points", precision = 3, scale = 1)
-    private BigDecimal storyPoints;
+    @Column(name = "resolution")
+    private String resolution;
 
-    @Column(nullable = false)
-    private Integer position = 0;
+    @Column(name = "resolved_at")
+    private LocalDateTime resolvedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_issue_id")
+    private Issue parentIssue;
+
+    @OneToMany(mappedBy = "parentIssue", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Issue> subIssues = new ArrayList<>();
+
+    @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Attachment> attachments = new ArrayList<>();
 
     @ManyToMany
     @JoinTable(
@@ -97,39 +130,7 @@ public class Issue extends BaseEntity {
     )
     private Set<Label> labels = new HashSet<>();
 
-    @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Comment> comments = new ArrayList<>();
-
-    @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Attachment> attachments = new ArrayList<>();
-
-    @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL)
-    private List<Notification> notifications = new ArrayList<>();
-
-    // Constructors
-    public Issue() {}
-
-    public Issue(String title, Project project, User reporter) {
-        this.title = title;
-        this.project = project;
-        this.reporter = reporter;
-    }
-
-    // Helper methods
-    public String getIssueNumber() {
-        return project.getKey() + "-" + id;
-    }
-
-    public void addLabel(Label label) {
-        labels.add(label);
-        label.getIssues().add(this);
-    }
-
-    public void removeLabel(Label label) {
-        labels.remove(label);
-        label.getIssues().remove(this);
-    }
-
+    // 편의 메서드들
     public void addComment(Comment comment) {
         comments.add(comment);
         comment.setIssue(this);
@@ -150,202 +151,84 @@ public class Issue extends BaseEntity {
         attachment.setIssue(null);
     }
 
-    public void addSubtask(Issue subtask) {
-        subtasks.add(subtask);
-        subtask.setParentIssue(this);
-        subtask.setType(Type.SUBTASK);
+    public void addLabel(Label label) {
+        labels.add(label);
+        label.getIssues().add(this);
     }
 
-    public void removeSubtask(Issue subtask) {
-        subtasks.remove(subtask);
-        subtask.setParentIssue(null);
+    public void removeLabel(Label label) {
+        labels.remove(label);
+        label.getIssues().remove(this);
+    }
+
+    public void addSubIssue(Issue subIssue) {
+        subIssues.add(subIssue);
+        subIssue.setParentIssue(this);
+    }
+
+    public void removeSubIssue(Issue subIssue) {
+        subIssues.remove(subIssue);
+        subIssue.setParentIssue(null);
+    }
+
+    public boolean isSubIssue() {
+        return parentIssue != null;
+    }
+
+    public boolean hasSubIssues() {
+        return !subIssues.isEmpty();
     }
 
     public boolean isCompleted() {
         return status == Status.DONE || status == Status.CLOSED;
     }
 
-    public boolean isSubtask() {
-        return type == Type.SUBTASK && parentIssue != null;
+    public boolean isInProgress() {
+        return status == Status.IN_PROGRESS || status == Status.IN_REVIEW || status == Status.TESTING;
     }
 
-    public int getCompletedSubtaskCount() {
-        return (int) subtasks.stream().filter(Issue::isCompleted).count();
+    public void resolve(String resolution) {
+        this.status = Status.DONE;
+        this.resolution = resolution;
+        this.resolvedAt = LocalDateTime.now();
     }
 
-    public double getSubtaskProgress() {
-        if (subtasks.isEmpty()) {
-            return 0.0;
+    public void close() {
+        this.status = Status.CLOSED;
+        if (resolvedAt == null) {
+            this.resolvedAt = LocalDateTime.now();
         }
-        return (double) getCompletedSubtaskCount() / subtasks.size() * 100;
     }
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
+    public void reopen() {
+        this.status = Status.TODO;
+        this.resolution = null;
+        this.resolvedAt = null;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public void setStatus(Status status) {
-        this.status = status;
-    }
-
-    public Priority getPriority() {
-        return priority;
-    }
-
-    public void setPriority(Priority priority) {
-        this.priority = priority;
-    }
-
-    public Type getType() {
-        return type;
-    }
-
-    public void setType(Type type) {
-        this.type = type;
-    }
-
-    public Project getProject() {
-        return project;
-    }
-
-    public void setProject(Project project) {
-        this.project = project;
-    }
-
-    public User getAssignee() {
-        return assignee;
-    }
-
-    public void setAssignee(User assignee) {
-        this.assignee = assignee;
-    }
-
-    public User getReporter() {
-        return reporter;
-    }
-
-    public void setReporter(User reporter) {
-        this.reporter = reporter;
-    }
-
-    public Issue getParentIssue() {
-        return parentIssue;
-    }
-
-    public void setParentIssue(Issue parentIssue) {
-        this.parentIssue = parentIssue;
+    // IssueResponse에서 사용하는 편의 메서드들
+    public String getIssueNumber() {
+        return project != null ? project.getKey() + "-" + id : "UNKNOWN-" + id;
     }
 
     public List<Issue> getSubtasks() {
-        return subtasks;
+        return subIssues; // subtasks는 subIssues의 별칭
     }
 
     public void setSubtasks(List<Issue> subtasks) {
-        this.subtasks = subtasks;
+        this.subIssues = subtasks; // subtasks는 subIssues의 별칭
     }
 
-    public LocalDateTime getDueDate() {
-        return dueDate;
+    public int getCompletedSubtaskCount() {
+        return (int) subIssues.stream()
+                .filter(Issue::isCompleted)
+                .count();
     }
 
-    public void setDueDate(LocalDateTime dueDate) {
-        this.dueDate = dueDate;
-    }
-
-    public BigDecimal getStoryPoints() {
-        return storyPoints;
-    }
-
-    public void setStoryPoints(BigDecimal storyPoints) {
-        this.storyPoints = storyPoints;
-    }
-
-    public Integer getPosition() {
-        return position;
-    }
-
-    public void setPosition(Integer position) {
-        this.position = position;
-    }
-
-    public Set<Label> getLabels() {
-        return labels;
-    }
-
-    public void setLabels(Set<Label> labels) {
-        this.labels = labels;
-    }
-
-    public List<Comment> getComments() {
-        return comments;
-    }
-
-    public void setComments(List<Comment> comments) {
-        this.comments = comments;
-    }
-
-    public List<Attachment> getAttachments() {
-        return attachments;
-    }
-
-    public void setAttachments(List<Attachment> attachments) {
-        this.attachments = attachments;
-    }
-
-    public List<Notification> getNotifications() {
-        return notifications;
-    }
-
-    public void setNotifications(List<Notification> notifications) {
-        this.notifications = notifications;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Issue issue = (Issue) o;
-        return Objects.equals(id, issue.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        return "Issue{" +
-                "id=" + id +
-                ", title='" + title + '\'' +
-                ", status=" + status +
-                ", priority=" + priority +
-                ", type=" + type +
-                '}';
+    public double getSubtaskProgress() {
+        if (subIssues.isEmpty()) {
+            return 0.0;
+        }
+        return (double) getCompletedSubtaskCount() / subIssues.size() * 100.0;
     }
 } 

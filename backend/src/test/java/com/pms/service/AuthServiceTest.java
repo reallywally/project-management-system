@@ -18,7 +18,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
@@ -61,11 +60,8 @@ class AuthServiceTest {
     @InjectMocks
     private AuthService authService;
 
-    private TestDataFactory testDataFactory;
-
     @BeforeEach
     void setUp() {
-        testDataFactory = new TestDataFactory();
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
     }
 
@@ -75,11 +71,11 @@ class AuthServiceTest {
         String email = "test@example.com";
         String password = "password123";
         
-        User mockUser = testDataFactory.createUser(email, "Test User", "testUser");
+        User mockUser = TestDataFactory.createTestUser(email, "Test User", passwordEncoder);
         mockUser.setEmailVerified(true);
         mockUser.setIsActive(true);
         
-        Role userRole = testDataFactory.createRole("ROLE_USER");
+        Role userRole = TestDataFactory.createTestRole("USER");
         mockUser.setRoles(Set.of(userRole));
 
         Authentication mockAuth = mock(Authentication.class);
@@ -134,7 +130,7 @@ class AuthServiceTest {
         String email = "test@example.com";
         String password = "password123";
         
-        User mockUser = testDataFactory.createUser(email, "Test User", "testUser");
+        User mockUser = TestDataFactory.createTestUser(email, "Test User", passwordEncoder);
         mockUser.setEmailVerified(false); // 이메일 미인증
 
         Authentication mockAuth = mock(Authentication.class);
@@ -158,7 +154,7 @@ class AuthServiceTest {
         String email = "test@example.com";
         String password = "password123";
         
-        User mockUser = testDataFactory.createUser(email, "Test User", "testUser");
+        User mockUser = TestDataFactory.createTestUser(email, "Test User", passwordEncoder);
         mockUser.setEmailVerified(true);
         mockUser.setIsActive(false); // 계정 비활성화
 
@@ -185,7 +181,7 @@ class AuthServiceTest {
         String name = "New User";
         String nickname = "newuser";
 
-        User mockUser = testDataFactory.createUser(email, name, nickname);
+        User mockUser = TestDataFactory.createTestUser(email, name, passwordEncoder);
 
         when(userService.findByEmail(email)).thenReturn(Optional.empty());
         when(userService.createUser(email, password, name, nickname)).thenReturn(mockUser);
@@ -213,7 +209,7 @@ class AuthServiceTest {
         String name = "New User";
         String nickname = "newuser";
 
-        User existingUser = testDataFactory.createUser(email, "Existing User", "existing");
+        User existingUser = TestDataFactory.createTestUser(email, "Existing User", passwordEncoder);
         when(userService.findByEmail(email)).thenReturn(Optional.of(existingUser));
 
         // When & Then

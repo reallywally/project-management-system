@@ -1,8 +1,14 @@
 package com.pms.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
+
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 @Entity
 @Table(name = "project_member", 
@@ -11,6 +17,12 @@ import java.util.Objects;
            @Index(name = "idx_project_id", columnList = "project_id"),
            @Index(name = "idx_user_id", columnList = "user_id")
        })
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+@ToString(exclude = {"project", "user"})
 public class ProjectMember extends BaseEntity {
 
     public enum Role {
@@ -19,6 +31,7 @@ public class ProjectMember extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -30,72 +43,34 @@ public class ProjectMember extends BaseEntity {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "role", nullable = false, length = 20)
     private Role role;
 
     @Column(name = "joined_at", nullable = false)
     private LocalDateTime joinedAt = LocalDateTime.now();
 
-    // Constructors
-    public ProjectMember() {}
-
+    // 편의 생성자
     public ProjectMember(Project project, User user, Role role) {
         this.project = project;
         this.user = user;
         this.role = role;
+        this.joinedAt = LocalDateTime.now();
     }
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
+    // 편의 메서드들
+    public boolean isOwner() {
+        return role == Role.OWNER;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public boolean isAdmin() {
+        return role == Role.ADMIN || role == Role.OWNER;
     }
 
-    public Project getProject() {
-        return project;
+    public boolean canManageProject() {
+        return role == Role.OWNER || role == Role.ADMIN;
     }
 
-    public void setProject(Project project) {
-        this.project = project;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
-    }
-
-    public LocalDateTime getJoinedAt() {
-        return joinedAt;
-    }
-
-    public void setJoinedAt(LocalDateTime joinedAt) {
-        this.joinedAt = joinedAt;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ProjectMember that = (ProjectMember) o;
-        return Objects.equals(id, that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
+    public boolean canEditIssues() {
+        return role != Role.VIEWER;
     }
 } 

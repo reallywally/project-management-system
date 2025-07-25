@@ -76,14 +76,14 @@ public class User extends BaseEntity implements UserDetails {
     @Column(name = "email_verification_token")
     private String emailVerificationToken;
 
-    @Column(name = "email_verification_token_expiry")
-    private LocalDateTime emailVerificationTokenExpiry;
+    @Column(name = "email_verification_expires_at")
+    private LocalDateTime emailVerificationExpiresAt;
 
     @Column(name = "password_reset_token")
     private String passwordResetToken;
 
-    @Column(name = "password_reset_token_expiry")
-    private LocalDateTime passwordResetTokenExpiry;
+    @Column(name = "password_reset_expires_at")
+    private LocalDateTime passwordResetExpiresAt;
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;

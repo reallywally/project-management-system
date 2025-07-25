@@ -2,30 +2,41 @@ package com.pms.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-
-import java.util.Objects;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
 
 @Entity
 @Table(name = "attachment", indexes = {
     @Index(name = "idx_issue_id", columnList = "issue_id"),
     @Index(name = "idx_uploaded_by", columnList = "uploaded_by")
 })
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+@ToString(exclude = {"issue", "uploadedBy"})
 public class Attachment extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
+    @NotBlank(message = "원본 파일명은 필수입니다")
     @Column(name = "original_name", nullable = false)
-    @NotBlank
     private String originalName;
 
+    @NotBlank(message = "저장된 파일명은 필수입니다")
     @Column(name = "stored_name", nullable = false)
-    @NotBlank
     private String storedName;
 
+    @NotBlank(message = "파일 경로는 필수입니다")
     @Column(name = "file_path", nullable = false, length = 500)
-    @NotBlank
     private String filePath;
 
     @Column(name = "content_type", length = 100)
@@ -42,9 +53,7 @@ public class Attachment extends BaseEntity {
     @JoinColumn(name = "uploaded_by", nullable = false)
     private User uploadedBy;
 
-    // Constructors
-    public Attachment() {}
-
+    // 편의 생성자
     public Attachment(String originalName, String storedName, String filePath, String contentType, Long fileSize, Issue issue, User uploadedBy) {
         this.originalName = originalName;
         this.storedName = storedName;
@@ -55,7 +64,7 @@ public class Attachment extends BaseEntity {
         this.uploadedBy = uploadedBy;
     }
 
-    // Helper methods
+    // 편의 메서드들
     public String getFileExtension() {
         int lastDotIndex = originalName.lastIndexOf('.');
         return lastDotIndex > 0 ? originalName.substring(lastDotIndex + 1).toLowerCase() : "";
@@ -78,93 +87,5 @@ public class Attachment extends BaseEntity {
         } else {
             return String.format("%.1f GB", fileSize / (1024.0 * 1024.0 * 1024.0));
         }
-    }
-
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getOriginalName() {
-        return originalName;
-    }
-
-    public void setOriginalName(String originalName) {
-        this.originalName = originalName;
-    }
-
-    public String getStoredName() {
-        return storedName;
-    }
-
-    public void setStoredName(String storedName) {
-        this.storedName = storedName;
-    }
-
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
-    }
-
-    public String getContentType() {
-        return contentType;
-    }
-
-    public void setContentType(String contentType) {
-        this.contentType = contentType;
-    }
-
-    public Long getFileSize() {
-        return fileSize;
-    }
-
-    public void setFileSize(Long fileSize) {
-        this.fileSize = fileSize;
-    }
-
-    public Issue getIssue() {
-        return issue;
-    }
-
-    public void setIssue(Issue issue) {
-        this.issue = issue;
-    }
-
-    public User getUploadedBy() {
-        return uploadedBy;
-    }
-
-    public void setUploadedBy(User uploadedBy) {
-        this.uploadedBy = uploadedBy;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Attachment that = (Attachment) o;
-        return Objects.equals(id, that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        return "Attachment{" +
-                "id=" + id +
-                ", originalName='" + originalName + '\'' +
-                ", contentType='" + contentType + '\'' +
-                ", fileSize=" + fileSize +
-                '}';
     }
 } 

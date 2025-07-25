@@ -42,7 +42,7 @@ public class ProjectResponse {
         response.setStartDate(project.getStartDate());
         response.setEndDate(project.getEndDate());
         response.setIsPublic(project.getIsPublic());
-        response.setAvatarUrl(project.getAvatarUrl());
+        // response.setAvatarUrl(project.getAvatarUrl());
         response.setMembers(project.getMembers().stream()
                 .map(ProjectMemberResponse::from)
                 .collect(Collectors.toList()));

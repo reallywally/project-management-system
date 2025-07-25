@@ -2,8 +2,12 @@ package com.pms.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-
-import java.util.Objects;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
 
 @Entity
 @Table(name = "comment", indexes = {
@@ -11,14 +15,21 @@ import java.util.Objects;
     @Index(name = "idx_author_id", columnList = "author_id"),
     @Index(name = "idx_created_at", columnList = "created_at")
 })
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+@ToString(exclude = {"issue", "author"})
 public class Comment extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
-    @NotBlank
+    @NotBlank(message = "댓글 내용은 필수입니다")
+    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -32,81 +43,32 @@ public class Comment extends BaseEntity {
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = false;
 
-    // Constructors
-    public Comment() {}
+    @Column(name = "edited_at")
+    private java.time.LocalDateTime editedAt;
 
+    // 편의 생성자
     public Comment(String content, Issue issue, User author) {
         this.content = content;
         this.issue = issue;
         this.author = author;
+        this.isDeleted = false;
     }
 
-    // Helper methods
-    public void markAsDeleted() {
+    // 편의 메서드들
+    public void edit(String newContent) {
+        this.content = newContent;
+        this.editedAt = java.time.LocalDateTime.now();
+    }
+
+    public void delete() {
         this.isDeleted = true;
-        this.content = "[This comment has been deleted]";
     }
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
+    public void restore() {
+        this.isDeleted = false;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public Issue getIssue() {
-        return issue;
-    }
-
-    public void setIssue(Issue issue) {
-        this.issue = issue;
-    }
-
-    public User getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(User author) {
-        this.author = author;
-    }
-
-    public Boolean getIsDeleted() {
-        return isDeleted;
-    }
-
-    public void setIsDeleted(Boolean isDeleted) {
-        this.isDeleted = isDeleted;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Comment comment = (Comment) o;
-        return Objects.equals(id, comment.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        return "Comment{" +
-                "id=" + id +
-                ", content='" + (content.length() > 50 ? content.substring(0, 50) + "..." : content) + '\'' +
-                ", isDeleted=" + isDeleted +
-                '}';
+    public boolean isEdited() {
+        return editedAt != null;
     }
 } 

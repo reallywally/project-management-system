@@ -1,8 +1,12 @@
 package com.pms.entity;
 
 import jakarta.persistence.*;
-
-import java.util.Objects;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
 
 @Entity
 @Table(name = "activity_log", indexes = {
@@ -11,13 +15,20 @@ import java.util.Objects;
     @Index(name = "idx_entity", columnList = "entity_type, entity_id"),
     @Index(name = "idx_created_at", columnList = "created_at")
 })
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+@ToString(exclude = {"user", "project"})
 public class ActivityLog extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
-    @Column(nullable = false, length = 100)
+    @Column(name = "action", nullable = false, length = 100)
     private String action;
 
     @Column(name = "entity_type", nullable = false, length = 50)
@@ -32,6 +43,12 @@ public class ActivityLog extends BaseEntity {
     @Column(name = "new_value", columnDefinition = "TEXT")
     private String newValue;
 
+    @Column(name = "ip_address", length = 45)
+    private String ipAddress;
+
+    @Column(name = "user_agent", length = 500)
+    private String userAgent;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -40,9 +57,7 @@ public class ActivityLog extends BaseEntity {
     @JoinColumn(name = "project_id")
     private Project project;
 
-    // Constructors
-    public ActivityLog() {}
-
+    // 편의 생성자
     public ActivityLog(String action, String entityType, Long entityId, User user) {
         this.action = action;
         this.entityType = entityType;
@@ -50,101 +65,26 @@ public class ActivityLog extends BaseEntity {
         this.user = user;
     }
 
-    public ActivityLog(String action, String entityType, Long entityId, String oldValue, String newValue, User user, Project project) {
+    public ActivityLog(String action, String entityType, Long entityId, String oldValue, String newValue, User user) {
         this.action = action;
         this.entityType = entityType;
         this.entityId = entityId;
         this.oldValue = oldValue;
         this.newValue = newValue;
         this.user = user;
-        this.project = project;
     }
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getAction() {
-        return action;
-    }
-
-    public void setAction(String action) {
-        this.action = action;
-    }
-
-    public String getEntityType() {
-        return entityType;
-    }
-
-    public void setEntityType(String entityType) {
-        this.entityType = entityType;
-    }
-
-    public Long getEntityId() {
-        return entityId;
-    }
-
-    public void setEntityId(Long entityId) {
-        this.entityId = entityId;
-    }
-
-    public String getOldValue() {
-        return oldValue;
-    }
-
-    public void setOldValue(String oldValue) {
-        this.oldValue = oldValue;
-    }
-
-    public String getNewValue() {
-        return newValue;
-    }
-
-    public void setNewValue(String newValue) {
-        this.newValue = newValue;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public Project getProject() {
-        return project;
-    }
-
+    // 편의 메서드들
     public void setProject(Project project) {
         this.project = project;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ActivityLog that = (ActivityLog) o;
-        return Objects.equals(id, that.id);
+    public void setClientInfo(String ipAddress, String userAgent) {
+        this.ipAddress = ipAddress;
+        this.userAgent = userAgent;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        return "ActivityLog{" +
-                "id=" + id +
-                ", action='" + action + '\'' +
-                ", entityType='" + entityType + '\'' +
-                ", entityId=" + entityId +
-                '}';
+    public boolean hasValueChange() {
+        return oldValue != null || newValue != null;
     }
 } 

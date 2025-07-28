@@ -1,19 +1,21 @@
 server:
-  port: 8080
+  port: 8081
   servlet:
     context-path: /api/v1
 
 spring:
   application:
     name: project-management-system
+  main:
+    allow-circular-references: true   # 임시로 순환 참조 허용
   
   profiles:
     active: dev
   
   datasource:
     url: jdbc:mysql://localhost:3306/pms_db?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
-    username: ${DB_USERNAME:pms_user}
-    password: ${DB_PASSWORD:pms_password}
+    username: admin
+    password: 1q2w3e4r5t
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 20

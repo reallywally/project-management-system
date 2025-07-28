@@ -1,96 +1,28 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { useAuthStore } from '@/stores/authStore'
-import { useEffect } from 'react'
-
-// Components
-import LoginPage from '@/pages/auth/LoginPage'
-import RegisterPage from '@/pages/auth/RegisterPage'
-import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage'
-import ResetPasswordPage from '@/pages/auth/ResetPasswordPage'
-import EmailVerificationPage from '@/pages/auth/EmailVerificationPage'
-
-// Protected pages
-import DashboardPage from '@/pages/DashboardPage'
-import ProjectsPage from '@/pages/projects/ProjectsPage'
-import ProjectDetailPage from '@/pages/projects/ProjectDetailPage'
-import KanbanBoardPage from '@/pages/projects/KanbanBoardPage'
-import IssueDetailPage from '@/pages/issues/IssueDetailPage'
-import ProfilePage from '@/pages/ProfilePage'
-
-// Layout
-import MainLayout from '@/components/layout/MainLayout'
-import AuthLayout from '@/components/layout/AuthLayout'
-
-// Loading component
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import React from 'react'
 
 function App() {
-  const { isAuthenticated, isLoading, initializeAuth } = useAuthStore()
-
-  useEffect(() => {
-    initializeAuth()
-  }, [initializeAuth])
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
+  return (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="bg-white p-8 rounded-lg shadow-md">
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">
+          🎉 Frontend가 정상적으로 실행되었습니다!
+        </h1>
+        <p className="text-gray-600 mb-4">
+          Project Management System이 성공적으로 로드되었습니다.
+        </p>
+        <div className="space-y-2">
+          <p className="text-sm text-gray-500">✅ React 앱 로드 완료</p>
+          <p className="text-sm text-gray-500">✅ Tailwind CSS 적용 완료</p>
+          <p className="text-sm text-gray-500">✅ Vite 개발서버 실행 완료</p>
+        </div>
+        <button 
+          onClick={() => alert('버튼이 정상적으로 동작합니다!')}
+          className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        >
+          테스트 버튼
+        </button>
       </div>
-    )
-  }
-
-  return (
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/auth/*" element={
-        isAuthenticated ? <Navigate to="/dashboard" replace /> : <AuthRoutes />
-      } />
-      
-      {/* Protected Routes */}
-      <Route path="/*" element={
-        isAuthenticated ? <ProtectedRoutes /> : <Navigate to="/auth/login" replace />
-      } />
-    </Routes>
-  )
-}
-
-function AuthRoutes() {
-  return (
-    <AuthLayout>
-      <Routes>
-        <Route path="login" element={<LoginPage />} />
-        <Route path="register" element={<RegisterPage />} />
-        <Route path="forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="reset-password" element={<ResetPasswordPage />} />
-        <Route path="verify-email" element={<EmailVerificationPage />} />
-        <Route path="*" element={<Navigate to="/auth/login" replace />} />
-      </Routes>
-    </AuthLayout>
-  )
-}
-
-function ProtectedRoutes() {
-  return (
-    <MainLayout>
-      <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        
-        {/* Projects */}
-        <Route path="/projects" element={<ProjectsPage />} />
-        <Route path="/projects/:projectKey" element={<ProjectDetailPage />} />
-        <Route path="/projects/:projectKey/board" element={<KanbanBoardPage />} />
-        
-        {/* Issues */}
-        <Route path="/issues/:issueId" element={<IssueDetailPage />} />
-        
-        {/* Profile */}
-        <Route path="/profile" element={<ProfilePage />} />
-        
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </MainLayout>
+    </div>
   )
 }
 

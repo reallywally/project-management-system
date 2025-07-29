@@ -3,16 +3,22 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { 
   Home, 
   FolderKanban, 
-  User, 
+  FileText,
+  Target,
+  BarChart3,
   Settings, 
   LogOut, 
   Bell,
   Search,
   Menu,
-  X
+  X,
+  ChevronDown
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
-import { getInitials } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Avatar } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
 interface MainLayoutProps {
   children: ReactNode
@@ -20,14 +26,18 @@ interface MainLayoutProps {
 
 const MainLayout = ({ children }: MainLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false)
   const { user, logout } = useAuthStore()
   const location = useLocation()
   const navigate = useNavigate()
 
   const navigation = [
-    { name: '대시보드', href: '/dashboard', icon: Home },
-    { name: '프로젝트', href: '/projects', icon: FolderKanban },
-    { name: '프로필', href: '/profile', icon: User },
+    { name: '대시보드', href: '/dashboard', icon: Home, emoji: '📊' },
+    { name: '프로젝트', href: '/projects', icon: FolderKanban, emoji: '📁' },
+    { name: '내 이슈', href: '/issues/me', icon: FileText, emoji: '📋' },
+    { name: '할당된 이슈', href: '/issues/assigned', icon: Target, emoji: '🎯' },
+    { name: '리포트', href: '/reports', icon: BarChart3, emoji: '📈' },
+    { name: '설정', href: '/settings', icon: Settings, emoji: '⚙️' },
   ]
 
   const handleLogout = async () => {
@@ -36,99 +46,153 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   }
 
   return (
-    <div className="h-screen flex overflow-hidden bg-gray-100">
-      {/* Mobile sidebar */}
-      <div className={`fixed inset-0 flex z-40 md:hidden ${sidebarOpen ? '' : 'hidden'}`}>
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
-        
-        <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white">
-          <div className="absolute top-0 right-0 -mr-12 pt-2">
-            <button
-              type="button"
-              className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <X className="h-6 w-6 text-white" />
-            </button>
-          </div>
-          
-          <SidebarContent navigation={navigation} location={location} />
+    <div className="h-screen flex overflow-hidden bg-background">
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div 
+            className="absolute inset-0 bg-black opacity-50"
+            onClick={() => setSidebarOpen(false)}
+          />
+          <aside className="absolute left-0 top-0 h-full w-64 bg-white shadow-xl">
+            <div className="flex items-center justify-between p-4 border-b">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold">🏢</span>
+                </div>
+                <span className="font-semibold text-gray-900">PMS</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            <SidebarContent navigation={navigation} location={location} />
+          </aside>
         </div>
-      </div>
+      )}
 
       {/* Desktop sidebar */}
-      <div className="hidden md:flex md:flex-shrink-0">
-        <div className="flex flex-col w-64">
+      <aside className="hidden lg:flex lg:flex-shrink-0">
+        <div className="w-64 bg-gray-50 border-r border-gray-200 h-full">
           <SidebarContent navigation={navigation} location={location} />
         </div>
-      </div>
+      </aside>
 
-      {/* Main content */}
-      <div className="flex flex-col w-0 flex-1 overflow-hidden">
-        {/* Top navigation */}
-        <div className="relative z-10 flex-shrink-0 flex h-16 bg-white shadow">
-          <button
-            type="button"
-            className="px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 md:hidden"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-          
-          <div className="flex-1 px-4 flex justify-between">
-            <div className="flex-1 flex">
-              <div className="w-full flex md:ml-0">
-                <div className="relative w-full text-gray-400 focus-within:text-gray-600">
-                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5" />
-                  </div>
+      {/* Main content area */}
+      <div className="flex flex-col flex-1 overflow-hidden">
+        {/* Header */}
+        <header className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* Left side - Logo and Search */}
+            <div className="flex items-center space-x-4">
+              {/* Mobile menu button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+
+              {/* Logo */}
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold">🏢</span>
+                </div>
+                <span className="hidden sm:block font-semibold text-gray-900">Project Management System</span>
+              </div>
+
+              {/* Global Search */}
+              <div className="hidden md:block">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
-                    className="block w-full h-full pl-8 pr-3 py-2 border-transparent text-gray-900 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-0 focus:border-transparent"
-                    placeholder="검색..."
-                    type="search"
+                    type="text"
+                    placeholder="전체 검색..."
+                    className="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
               </div>
             </div>
             
-            <div className="ml-4 flex items-center md:ml-6">
+            {/* Right side - Notifications and Profile */}
+            <div className="flex items-center space-x-4">
               {/* Notifications */}
-              <button
-                type="button"
-                className="bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <Bell className="h-6 w-6" />
-              </button>
-
-              {/* Profile dropdown */}
-              <div className="ml-3 relative">
-                <div className="flex items-center">
-                  <div className="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-sm font-medium">
-                    {getInitials(user?.name || 'User')}
-                  </div>
-                  <span className="ml-3 text-gray-700 text-sm font-medium hidden md:block">
-                    {user?.nickname || user?.name}
-                  </span>
-                </div>
+              <div className="relative">
+                <Button variant="ghost" size="icon">
+                  <Bell className="h-5 w-5" />
+                </Button>
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+                >
+                  3
+                </Badge>
               </div>
 
-              {/* Logout button */}
-              <button
-                onClick={handleLogout}
-                className="ml-3 bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <LogOut className="h-6 w-6" />
-              </button>
+              {/* Profile Dropdown */}
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  className="flex items-center space-x-2 px-3"
+                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                >
+                  <Avatar 
+                    name={user?.name || user?.nickname} 
+                    size="sm"
+                  />
+                  <span className="hidden sm:block text-sm font-medium text-gray-700">
+                    {user?.nickname || user?.name}
+                  </span>
+                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                </Button>
+
+                {/* Dropdown Menu */}
+                {profileDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                    <div className="py-1">
+                      <Link
+                        to="/profile"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setProfileDropdownOpen(false)}
+                      >
+                        👤 프로필
+                      </Link>
+                      <Link
+                        to="/settings"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setProfileDropdownOpen(false)}
+                      >
+                        ⚙️ 설정
+                      </Link>
+                      <hr className="my-1" />
+                      <button
+                        onClick={() => {
+                          setProfileDropdownOpen(false)
+                          handleLogout()
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+                      >
+                        <LogOut className="inline h-4 w-4 mr-2" />
+                        로그아웃
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        </header>
 
-        {/* Page content */}
-        <main className="flex-1 relative overflow-y-auto focus:outline-none">
-          <div className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-              {children}
-            </div>
+        {/* Main content */}
+        <main className="flex-1 overflow-auto bg-gray-50">
+          <div className="h-full">
+            {children}
           </div>
         </main>
       </div>
@@ -136,41 +200,39 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   )
 }
 
-function SidebarContent({ navigation, location }: { navigation: any[], location: any }) {
+// Sidebar Content Component
+interface SidebarContentProps {
+  navigation: Array<{
+    name: string
+    href: string
+    icon: any
+    emoji: string
+  }>
+  location: any
+}
+
+const SidebarContent = ({ navigation, location }: SidebarContentProps) => {
   return (
-    <div className="flex-1 flex flex-col min-h-0 border-r border-gray-200 bg-white">
-      <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
-        <div className="flex items-center flex-shrink-0 px-4">
-          <h1 className="text-xl font-bold text-gray-900">PMS</h1>
-        </div>
-        
-        <nav className="mt-5 flex-1 px-2 bg-white space-y-1">
-          {navigation.map((item) => {
-            const isActive = location.pathname === item.href || 
-                           (item.href !== '/dashboard' && location.pathname.startsWith(item.href))
-            
-            return (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`${
-                  isActive
-                    ? 'bg-gray-100 text-gray-900'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                } group flex items-center px-2 py-2 text-sm font-medium rounded-md`}
-              >
-                <item.icon
-                  className={`${
-                    isActive ? 'text-gray-500' : 'text-gray-400 group-hover:text-gray-500'
-                  } mr-3 flex-shrink-0 h-6 w-6`}
-                />
-                {item.name}
-              </Link>
-            )
-          })}
-        </nav>
-      </div>
-    </div>
+    <nav className="p-4 space-y-2">
+      {navigation.map((item) => {
+        const isActive = location.pathname === item.href
+        return (
+          <Link
+            key={item.name}
+            to={item.href}
+            className={cn(
+              "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+              isActive
+                ? "bg-primary text-primary-foreground"
+                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            )}
+          >
+            <span className="text-base">{item.emoji}</span>
+            <span>{item.name}</span>
+          </Link>
+        )
+      })}
+    </nav>
   )
 }
 

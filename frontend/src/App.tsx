@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { BrowserRouter } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -6,22 +7,26 @@ import { Progress } from '@/components/ui/progress'
 import { Avatar } from '@/components/ui/avatar'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import LoginPage from '@/pages/auth/LoginPage'
 import DashboardPage from '@/pages/DashboardPage'
 import ProjectListPage from '@/pages/projects/ProjectListPage'
 import KanbanBoardPage from '@/pages/projects/KanbanBoardPage'
+import TimelinePage from '@/pages/projects/TimelinePage'
 import MainLayout from '@/components/layout/MainLayout'
 
 function App() {
   const [activeTab, setActiveTab] = useState('overview')
   const [currentPage, setCurrentPage] = useState('login')
 
+  // 디버깅을 위한 콘솔 로그
+  console.log('Current activeTab:', activeTab)
+
   const pages = [
     { id: 'login', label: '🔐 로그인', component: LoginPage },
     { id: 'dashboard', label: '📊 대시보드', component: DashboardPage },
     { id: 'projects', label: '📁 프로젝트 목록', component: ProjectListPage },
-    { id: 'kanban', label: '📋 칸반 보드', component: KanbanBoardPage }
+    { id: 'kanban', label: '📋 칸반 보드', component: KanbanBoardPage },
+    { id: 'timeline', label: '📅 타임라인', component: TimelinePage }
   ]
 
   const renderPageContent = () => {
@@ -41,33 +46,40 @@ function App() {
     }
   }
 
+  const handleTabChange = (value: string) => {
+    console.log('Tab changed to:', value)
+    setActiveTab(value)
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {activeTab === 'demo' ? (
-        <div className="h-screen">
-          {/* Page Navigation */}
-          <div className="bg-white border-b shadow-sm p-4">
-            <div className="max-w-6xl mx-auto">
-              <div className="flex flex-wrap gap-2">
-                {pages.map((page) => (
-                  <Button
-                    key={page.id}
-                    variant={currentPage === page.id ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setCurrentPage(page.id)}
-                  >
-                    {page.label}
-                  </Button>
-                ))}
+        <BrowserRouter>
+          <div className="h-screen">
+            {/* Page Navigation */}
+            <div className="bg-white border-b shadow-sm p-4">
+              <div className="max-w-6xl mx-auto">
+                <div className="flex flex-wrap gap-2">
+                  {pages.map((page) => (
+                    <Button
+                      key={page.id}
+                      variant={currentPage === page.id ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setCurrentPage(page.id)}
+                    >
+                      {page.label}
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Page Content */}
-          <div className="h-[calc(100vh-73px)]">
-            {renderPageContent()}
+            {/* Page Content */}
+            <div className="h-[calc(100vh-73px)]">
+              {renderPageContent()}
+            </div>
           </div>
-        </div>
+        </BrowserRouter>
       ) : (
         <div className="p-8">
           <div className="max-w-6xl mx-auto space-y-8">
@@ -93,16 +105,30 @@ function App() {
 
             {/* Navigation Tabs */}
             <div className="flex justify-center">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-2xl">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="overview">📊 개요</TabsTrigger>
-                  <TabsTrigger value="components">🧩 컴포넌트</TabsTrigger>
-                  <TabsTrigger value="features">✨ 기능</TabsTrigger>
-                  <TabsTrigger value="demo">🚀 데모</TabsTrigger>
-                </TabsList>
+              <div className="w-full max-w-2xl">
+                <div className="flex space-x-1 p-1 bg-gray-200 rounded-lg mb-8">
+                  {[
+                    { id: 'overview', label: '📊 개요' },
+                    { id: 'components', label: '🧩 컴포넌트' },
+                    { id: 'features', label: '✨ 기능' },
+                    { id: 'demo', label: '🚀 데모' }
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => handleTabChange(tab.id)}
+                      className={`flex-1 px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                        activeTab === tab.id
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
 
-                {/* Overview Tab */}
-                <TabsContent value="overview" className="mt-8">
+                {/* Tab Contents */}
+                {activeTab === 'overview' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <Card className="hover:shadow-md transition-shadow">
                       <CardContent className="p-6">
@@ -187,11 +213,38 @@ function App() {
                         </div>
                       </CardContent>
                     </Card>
-                  </div>
-                </TabsContent>
 
-                {/* Components Tab */}
-                <TabsContent value="components" className="mt-8">
+                    <Card className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-6">
+                        <div className="flex items-center">
+                          <div className="w-12 h-12 bg-teal-500 rounded-lg flex items-center justify-center">
+                            <span className="text-white text-xl">📅</span>
+                          </div>
+                          <div className="ml-4">
+                            <h3 className="text-lg font-semibold">타임라인 뷰</h3>
+                            <p className="text-sm text-gray-600">Jira 스타일 간트 차트</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-6">
+                        <div className="flex items-center">
+                          <div className="w-12 h-12 bg-pink-500 rounded-lg flex items-center justify-center">
+                            <span className="text-white text-xl">🔄</span>
+                          </div>
+                          <div className="ml-4">
+                            <h3 className="text-lg font-semibold">뷰 전환</h3>
+                            <p className="text-sm text-gray-600">칸반 ↔ 타임라인 전환</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+
+                {activeTab === 'components' && (
                   <Card>
                     <CardHeader>
                       <CardTitle>Shadcn UI 컴포넌트 갤러리</CardTitle>
@@ -270,10 +323,9 @@ function App() {
                       </div>
                     </CardContent>
                   </Card>
-                </TabsContent>
+                )}
 
-                {/* Features Tab */}
-                <TabsContent value="features" className="mt-8">
+                {activeTab === 'features' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card>
                       <CardHeader>
@@ -354,10 +406,9 @@ function App() {
                       </CardContent>
                     </Card>
                   </div>
-                </TabsContent>
+                )}
 
-                {/* Demo Tab - Already handled above */}
-                <TabsContent value="demo" className="mt-8">
+                {activeTab === 'demo' && (
                   <Card>
                     <CardHeader>
                       <CardTitle>🚀 라이브 데모</CardTitle>
@@ -381,8 +432,8 @@ function App() {
                       </div>
                     </CardContent>
                   </Card>
-                </TabsContent>
-              </Tabs>
+                )}
+              </div>
             </div>
 
             {/* Footer */}

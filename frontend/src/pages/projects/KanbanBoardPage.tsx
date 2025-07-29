@@ -14,7 +14,9 @@ import {
   MoreHorizontal,
   MessageCircle,
   Paperclip,
-  CheckSquare
+  CheckSquare,
+  Grid3X3,
+  Calendar
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -379,6 +381,32 @@ const KanbanBoardPage: React.FC = () => {
           <p className="text-gray-600 mt-1">Kanban board for project management</p>
         </div>
         <div className="flex items-center space-x-2">
+          {/* View Toggle */}
+          <div className="flex bg-gray-200 rounded-lg p-1 mr-3">
+            <Button
+              variant="default"
+              size="sm"
+              className="h-8"
+            >
+              <Grid3X3 className="h-4 w-4 mr-2" />
+              Kanban
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                // This would need to be handled by parent component or router
+                console.log('Switch to Timeline view')
+                // For demo purposes, show alert
+                alert('타임라인 뷰로 전환하려면 상단의 "📅 타임라인" 탭을 클릭하세요!')
+              }}
+              className="h-8"
+            >
+              <Calendar className="h-4 w-4 mr-2" />
+              Timeline
+            </Button>
+          </div>
+          
           <Button size="sm" variant="outline">
             <Plus className="h-4 w-4 mr-2" />
             Add Issue
